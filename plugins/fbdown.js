@@ -61,7 +61,6 @@ cmd(
       // Prepare and send the message with video details
       let desc = `*💟 PIKO FB VIDEO DOWNLOADER 💜*
 
-👻 *Title*: ${title}
 👻 *Quality*: ${hd ? "HD Available" : "SD Only"}
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
@@ -99,7 +98,7 @@ cmd(
         return reply("*No downloadable video found!* ⚠️");
       }
 
-      return reply("*DOWNLOAD COMPLETED* ✅");
+      return reply("*UPLOAD COMPLETED* ✅");
     } catch (e) {
       console.error(e);
       reply(`*Error:* ${e.message || e}`);
