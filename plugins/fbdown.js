@@ -5,7 +5,7 @@ cmd(
   {
     pattern: "fb",
     alias: ["facebook"],
-    react: "💀",
+    react: "🎥",
     desc: "Download Facebook Video",
     category: "download",
     filename: __filename,
@@ -40,15 +40,15 @@ cmd(
     }
   ) => {
     try {
-      if (!q) return reply("*Please provide a valid Facebook video URL!* 🌚❤️");
+      if (!q) return reply("*Please provide a valid Facebook video URL!* ❌");
 
       // Validate the Facebook URL format
       const fbRegex = /(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/;
       if (!fbRegex.test(q))
-        return reply("*Invalid Facebook URL! Please check and try again.* 🌚");
+        return reply("*Invalid Facebook URL! Please check and try again.* ❌");
 
       // Fetch video details
-      reply("*Downloading your video...* 🌚❤️");
+      reply("*Downloading your video...* 🔜❤️");
 
       const result = await getFbVideoInfo(q);
 
@@ -59,18 +59,18 @@ cmd(
       const { title, sd, hd } = result;
 
       // Prepare and send the message with video details
-      let desc = `*❤️ ROBIN FB VIDEO DOWNLOADER ❤️*
+      let desc = `*💟 PIKO FB VIDEO DOWNLOADER 💜*
 
-👻 *Title*: ${title || "Unknown"}
+👻 *Title*: ${title}
 👻 *Quality*: ${hd ? "HD Available" : "SD Only"}
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 𝐒_𝐈_𝐇_𝐈_𝐋_𝐄_𝐋
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
       `;
       await robin.sendMessage(
         from,
         {
           image: {
-            url: "https://raw.githubusercontent.com/Dark-Robin/Bot-Helper/refs/heads/main/autoimage/Bot%20fb-1.jpg",
+            url: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
           },
           caption: desc,
         },
@@ -81,25 +81,25 @@ cmd(
       if (hd) {
         await robin.sendMessage(
           from,
-          { video: { url: hd }, caption: "----------HD VIDEO----------" },
+          { video: { url: hd }, caption: "*----------HD VIDEO----------*" },
           { quoted: mek }
         );
         await robin.sendMessage(
           from,
-          { video: { url: sd }, caption: "----------SD VIDEO----------" },
+          { video: { url: sd }, caption: "*----------SD VIDEO----------*" },
           { quoted: mek }
         );
       } else if (sd) {
         await robin.sendMessage(
           from,
-          { video: { url: sd }, caption: "----------SD VIDEO----------" },
+          { video: { url: sd }, caption: "*----------SD VIDEO----------*" },
           { quoted: mek }
         );
       } else {
-        return reply("*No downloadable video found!* 🌚");
+        return reply("*No downloadable video found!* ⚠️");
       }
 
-      return reply("*Thanks for using my bot* 🌚❤️");
+      return reply("*DOWNLOAD COMPLETED* ✅");
     } catch (e) {
       console.error(e);
       reply(`*Error:* ${e.message || e}`);
