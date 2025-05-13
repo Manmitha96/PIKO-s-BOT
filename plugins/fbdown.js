@@ -1,5 +1,5 @@
-const { cmd, commands } = require("../command");
-const getFbVideoInfo = require("fb-downloader-scrapper");
+const { cmd } = require("../command");
+const { getFbVideoInfo } = require("fb-downloader-scrapper");
 
 cmd(
   {
@@ -59,14 +59,13 @@ cmd(
       const { title, sd, hd } = result;
 
       // Prepare and send the message with video details
-      let desc = `
-*❤️ ROBIN FB VIDEO DOWNLOADER ❤️*
+      let desc = `*❤️ ROBIN FB VIDEO DOWNLOADER ❤️*
 
 👻 *Title*: ${title || "Unknown"}
 👻 *Quality*: ${hd ? "HD Available" : "SD Only"}
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 𝐒_𝐈_𝐇_𝐈_𝐋_𝐄_𝐋
-        `;
+      `;
       await robin.sendMessage(
         from,
         {
@@ -77,6 +76,7 @@ cmd(
         },
         { quoted: mek }
       );
+
       // Send the video if available
       if (hd) {
         await robin.sendMessage(
