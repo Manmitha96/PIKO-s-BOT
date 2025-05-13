@@ -5,7 +5,7 @@ cmd(
   {
     pattern: "fb",
     alias: ["facebook"],
-    react: "💀",
+    react: "🎥",
     desc: "Download Facebook Video",
     category: "download",
     filename: __filename,
@@ -40,29 +40,28 @@ cmd(
     }
   ) => {
     try {
-      if (!q) return reply("*Please provide a valid Facebook video URL!* 🌚❤️");
+      if (!q) return reply("*Please provide a valid Facebook video URL!❌*");
 
       // Validate the Facebook URL format
       const fbRegex = /(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/;
       if (!fbRegex.test(q))
-        return reply("*Invalid Facebook URL! Please check and try again.* 🌚");
+        return reply("*Invalid Facebook URL! Please check and try again.* ❌");
 
       // Fetch video details
-      reply("*Downloading your video...* 🌚❤️");
+      reply("*Downloading Your Video...* ❤️");
 
       const result = await getFbVideoInfo(q);
 
       if (!result || (!result.sd && !result.hd)) {
-        return reply("*Failed to download video. Please try again later.* 🌚");
+        return reply("*Failed to download video. Please try again later.* ⚠️");
       }
 
       const { title, sd, hd } = result;
 
       // Prepare and send the message with video details
       let desc = `
-*❤️ ROBIN FB VIDEO DOWNLOADER ❤️*
+*💜 PIKO FB VIDEO DOWNLOADER 💜*
 
-👻 *Title*: ${title || "Unknown"}
 👻 *Quality*: ${hd ? "HD Available" : "SD Only"}
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 𝐒_𝐈_𝐇_𝐈_𝐋_𝐄_𝐋
@@ -71,7 +70,7 @@ cmd(
         from,
         {
           image: {
-            url: "https://raw.githubusercontent.com/Dark-Robin/Bot-Helper/refs/heads/main/autoimage/Bot%20fb-1.jpg",
+            url: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
           },
           caption: desc,
         },
@@ -96,10 +95,10 @@ cmd(
           { quoted: mek }
         );
       } else {
-        return reply("*No downloadable video found!* 🌚");
+        return reply("*No downloadable video found!* ❌");
       }
 
-      return reply("*Thanks for using my bot* 🌚❤️");
+      return reply("*Thanks for using my bot* ❤️");
     } catch (e) {
       console.error(e);
       reply(`*Error:* ${e.message || e}`);
