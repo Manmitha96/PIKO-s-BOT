@@ -40,7 +40,7 @@ cmd(
     }
   ) => {
     try {
-      if (!q) return reply("*Please Give A Name Or A Link To The Video* ❤️");
+      if (!q) return reply("*Please Give A Name Or A Link To The Audio* ❤️");
 
       // Search for the video
       const search = await yts(q);
