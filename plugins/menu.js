@@ -74,6 +74,14 @@ ${menu.group}
 | *OWNER COMMANDS* |
     ▫️.restart
     ▫️.update
+    ▫️.block
+    ▫️.kick
+    ▫️.left
+    ▫️.left
+    ▫️.mute
+    ▫️.add <+94 xxxxxxxxx>
+    ▫️.demote
+    ▫️.promote
 | *CONVERT COMMANDS* |
     ▫️.sticker <reply img>
     ▫️.img <reply sticker>
