@@ -1,141 +1,94 @@
 const { cmd } = require("../command");
 const yts = require("yt-search");
-const { ytmp4 } = require("@vreden/youtube_scraper");
+const axios = require("axios");
 
-const videoSessions = new Map(); // Store sessions by user
-
-const resolutionMap = {
-  "1": "144",
-  "2": "240",
-  "3": "360",
-  "4": "480",
-  "5": "720",
-  "6": "1080",
-};
-
-// Step 1: Search for video and ask resolution
 cmd(
   {
     pattern: "video",
-    react: "🎶",
+    react: "🎥",
     desc: "Download YouTube Video",
     category: "download",
     filename: __filename,
   },
-  async (robin, mek, m, { from, q, reply }) => {
+  async (
+    robin,
+    mek,
+    m,
+    { from, quoted, body, isCmd, command, args, q, isGroup, sender, reply }
+  ) => {
     try {
-      if (!q) return reply("*Please provide a video name or link.* ❤️");
+      if (!q) return reply("*Provide a name or a YouTube link.* 🎥❤️");
 
+      // Search for the video
       const search = await yts(q);
       const data = search.videos[0];
       const url = data.url;
 
-      // Save session step 1
-      videoSessions.set(from, { step: 1, url, data });
-      console.log("SESSION DATA:", session);
+      // Video metadata description
+      let desc = *❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
+      
+👻 *Title* : ${data.title}
+👻 *Duration* : ${data.timestamp}
+👻 *Views* : ${data.views}
+👻 *Uploaded* : ${data.ago}
+👻 *Channel* : ${data.author.name}
+👻 *Link* : ${data.url}
 
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜
+;
 
-      let menu = `*🎬 Select a resolution:*\n\n`;
-      menu += `1 = 144p\n2 = 240p\n3 = 360p\n4 = 480p\n5 = 720p\n6 = 1080p\n\n`;
-      menu += `_Reply with a number (e.g. 1 for 144p)_`;
-
+      // Send metadata and thumbnail message
       await robin.sendMessage(
         from,
-        { image: { url: data.thumbnail }, caption: menu },
+        { image: { url: data.thumbnail }, caption: desc },
         { quoted: mek }
       );
-    } catch (e) {
-      console.log(e);
-      reply("❌ Failed to search for the video.");
-    }
-  }
-);
 
-// Step 2 & 3: Resolution number and doc/video selection
-cmd(
-  {
-    pattern: /.*/, // Listen to all messages
-    fromMe: false,
-  },
-  async (robin, mek, m, { from, body, reply }) => {
-    const session = videoSessions.get(from);
-    if (!session) return;
+      // Video download function
+      const downloadVideo = async (url, quality) => {
+        const apiUrl = https://p.oceansaver.in/ajax/download.php?format=${quality}&url=${encodeURIComponent(
+          url
+        )}&api=dfcb6d76f2f6a9894gjkege8a4ab232222;
+        const response = await axios.get(apiUrl);
 
-    const input = body.trim().toLowerCase();
+        if (response.data && response.data.success) {
+          const { id, title } = response.data;
 
-    // DEBUG
-    console.log("SESSION DATA:", session);
-
-    // Step 1: Handle number-based resolution
-    if (session.step === 1) {
-      const res = resolutionMap[input];
-      if (!res) return reply("❌ Invalid number. Please reply with 1 to 6.");
-
-      session.resolution = res;
-      session.step = 2;
-      videoSessions.set(from, session);
-
-      return reply(`✅ Resolution *${res}p* selected.\n\nNow reply with \`doc\` or \`video\``);
-    }
-
-    // Step 2: Handle format (doc or video)
-    if (session.step === 2) {
-      const { resolution, url, data } = session;
-
-      if (!["doc", "video"].includes(input)) {
-        return reply("❌ Invalid option. Please reply with `doc` or `video`.");
-      }
-
-      try {
-        let durationParts = data.timestamp.split(":").map(Number);
-        let totalSeconds =
-          durationParts.length === 3
-            ? durationParts[0] * 3600 + durationParts[1] * 60 + durationParts[2]
-            : durationParts[0] * 60 + durationParts[1];
-
-        if (totalSeconds > 1800) {
-          videoSessions.delete(from);
-          return reply("⏱️ Sorry, video must be less than 30 minutes.");
-        }
-
-        const videoData = await ytmp4(url, resolution);
-        if (!videoData?.download?.url) {
-          return reply(`❌ Couldn't fetch ${resolution}p video. Try another resolution.`);
-        }
-
-        const fileUrl = videoData.download.url;
-        const fileName = `${data.title}_${resolution}p.mp4`;
-
-        if (input === "doc") {
-          await robin.sendMessage(
-            from,
-            {
-              document: { url: fileUrl },
-              mimetype: "video/mp4",
-              fileName,
-              caption: "📁 Here is your video as a *document*.",
-            },
-            { quoted: mek }
-          );
+          // Wait for download URL generation
+          const progressUrl = 'https://p.oceansaver.in/ajax/progress.php?id=${id}';
+          while (true) {
+            const progress = await axios.get(progressUrl);
+            if (progress.data.success && progress.data.progress === 1000) {
+              const videoBuffer = await axios.get(progress.data.download_url, {
+                responseType: "arraybuffer",
+              });
+              return { buffer: videoBuffer.data, title };
+            }
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
         } else {
-          await robin.sendMessage(
-            from,
-            {
-              video: { url: fileUrl },
-              mimetype: "video/mp4",
-              caption: "🎬 Here is your video file.",
-            },
-            { quoted: mek }
-          );
+          throw new Error("Failed to fetch video details.");
         }
+      };
 
-        reply("✅ Video sent successfully!");
-        videoSessions.delete(from);
-      } catch (e) {
-        console.error(e);
-        reply("❌ Error downloading the video.");
-        videoSessions.delete(from);
-      }
+      // Specify desired quality (default: 720p)
+      const quality = "720";
+
+      // Download and send video
+      const video = await downloadVideo(url, quality);
+      await robin.sendMessage(
+        from,
+        {
+          video: video.buffer,
+          caption: '🎥 *${video.title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜',
+        },
+        { quoted: mek }
+      );
+
+      reply("*Thanks for using my bot!* 🎥❤️");
+    } catch (e) {
+      console.error(e);
+      reply('❌ Error: ${e.message}');
     }
   }
 );
