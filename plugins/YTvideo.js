@@ -2,6 +2,17 @@ const { cmd } = require("../command");
 const yts = require("yt-search");
 const axios = require("axios");
 
+const videoSessions = new Map();
+
+const resolutionMap = {
+  "1": "144",
+  "2": "240",
+  "3": "360",
+  "4": "480",
+  "5": "720",
+  "6": "1080",
+};
+
 cmd(
   {
     pattern: "video",
@@ -10,23 +21,19 @@ cmd(
     category: "download",
     filename: __filename,
   },
-  async (
-    robin,
-    mek,
-    m,
-    { from, quoted, body, isCmd, command, args, q, isGroup, sender, reply }
-  ) => {
+  async (robin, mek, m, { from, q, reply }) => {
     try {
-      if (!q) return reply("*Provide a name or a YouTube link.* 🎥❤️");
+      if (!q) return reply("*Provide a name or YouTube link.* 🎥❤️");
 
-      // Search for the video
       const search = await yts(q);
       const data = search.videos[0];
       const url = data.url;
 
-      // Video metadata description
-      let desc = *❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
-      
+      // Save session
+      videoSessions.set(from, { step: 1, url, data });
+
+      const menu = `*❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
+
 👻 *Title* : ${data.title}
 👻 *Duration* : ${data.timestamp}
 👻 *Views* : ${data.views}
@@ -34,61 +41,126 @@ cmd(
 👻 *Channel* : ${data.author.name}
 👻 *Link* : ${data.url}
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜
-;
+*Choose quality:*
+1 = 144p
+2 = 240p
+3 = 360p
+4 = 480p
+5 = 720p
+6 = 1080p
 
-      // Send metadata and thumbnail message
+_Reply with the number (e.g. 1 for 144p)_`;
+
       await robin.sendMessage(
         from,
-        { image: { url: data.thumbnail }, caption: desc },
+        { image: { url: data.thumbnail }, caption: menu },
         { quoted: mek }
       );
-
-      // Video download function
-      const downloadVideo = async (url, quality) => {
-        const apiUrl = https://p.oceansaver.in/ajax/download.php?format=${quality}&url=${encodeURIComponent(
-          url
-        )}&api=dfcb6d76f2f6a9894gjkege8a4ab232222;
-        const response = await axios.get(apiUrl);
-
-        if (response.data && response.data.success) {
-          const { id, title } = response.data;
-
-          // Wait for download URL generation
-          const progressUrl = 'https://p.oceansaver.in/ajax/progress.php?id=${id}';
-          while (true) {
-            const progress = await axios.get(progressUrl);
-            if (progress.data.success && progress.data.progress === 1000) {
-              const videoBuffer = await axios.get(progress.data.download_url, {
-                responseType: "arraybuffer",
-              });
-              return { buffer: videoBuffer.data, title };
-            }
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-          }
-        } else {
-          throw new Error("Failed to fetch video details.");
-        }
-      };
-
-      // Specify desired quality (default: 720p)
-      const quality = "720";
-
-      // Download and send video
-      const video = await downloadVideo(url, quality);
-      await robin.sendMessage(
-        from,
-        {
-          video: video.buffer,
-          caption: '🎥 *${video.title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜',
-        },
-        { quoted: mek }
-      );
-
-      reply("*Thanks for using my bot!* 🎥❤️");
     } catch (e) {
       console.error(e);
-      reply('❌ Error: ${e.message}');
+      reply("❌ Failed to search for the video.");
+    }
+  }
+);
+
+// Follow-up responses
+cmd(
+  {
+    pattern: /.*/, // Catch replies
+    fromMe: false,
+  },
+  async (robin, mek, m, { from, body, reply }) => {
+    const session = videoSessions.get(from);
+    if (!session) return;
+
+    const input = body.trim().toLowerCase();
+
+    // Step 1: resolution select
+    if (session.step === 1) {
+      const quality = resolutionMap[input];
+      if (!quality) return reply("❌ Invalid option. Reply with 1 to 6 for resolution.");
+
+      session.quality = quality;
+      session.step = 2;
+      videoSessions.set(from, session);
+      return reply(`✅ *${quality}p* selected. Now reply with \`video\` or \`doc\`.`);
+    }
+
+    // Step 2: format select
+    if (session.step === 2) {
+      if (!["video", "doc"].includes(input)) {
+        return reply("❌ Invalid type. Reply with `video` or `doc`.");
+      }
+
+      const { url, quality, data } = session;
+
+      try {
+        // Prepare API
+        const apiUrl = `https://p.oceansaver.in/ajax/download.php?format=${quality}&url=${encodeURIComponent(url)}&api=dfcb6d76f2f6a9894gjkege8a4ab232222`;
+
+        const response = await axios.get(apiUrl);
+        if (!response.data || !response.data.success) {
+          return reply("❌ Failed to fetch video data.");
+        }
+
+        const { id, title } = response.data;
+
+        const progressUrl = `https://p.oceansaver.in/ajax/progress.php?id=${id}`;
+
+        let downloadUrl = null;
+        let waitTime = 0;
+        while (waitTime < 60000) { // 1 min timeout
+          const progRes = await axios.get(progressUrl);
+          if (progRes.data.success && progRes.data.progress === 1000) {
+            downloadUrl = progRes.data.download_url;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 4000));
+          waitTime += 4000;
+        }
+
+        if (!downloadUrl) {
+          videoSessions.delete(from);
+          return reply("❌ Video conversion timed out.");
+        }
+
+        const videoBuffer = await axios.get(downloadUrl, {
+          responseType: "arraybuffer",
+        });
+
+        const filename = `${title}_${quality}p.mp4`;
+
+        if (input === "doc") {
+          await robin.sendMessage(
+            from,
+            {
+              document: videoBuffer.data,
+              fileName: filename,
+              mimetype: "video/mp4",
+              caption: "📁 Sent as document",
+            },
+            { quoted: mek }
+          );
+        } else {
+          await robin.sendMessage(
+            from,
+            {
+              video: videoBuffer.data,
+              mimetype: "video/mp4",
+              caption: `🎬 *${title}* - ${quality}p`,
+            },
+            { quoted: mek }
+          );
+        }
+
+        videoSessions.delete(from);
+        return reply("✅ Video sent. Thanks for using PIKO Bot 💜");
+
+      } catch (err) {
+        console.error(err);
+        videoSessions.delete(from);
+        return reply("❌ Error during download.");
+      }
     }
   }
 );
