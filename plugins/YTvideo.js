@@ -32,6 +32,8 @@ cmd(
 
       // Save session step 1
       videoSessions.set(from, { step: 1, url, data });
+      console.log("SESSION DATA:", session);
+
 
       let menu = `*🎬 Select a resolution:*\n\n`;
       menu += `1 = 144p\n2 = 240p\n3 = 360p\n4 = 480p\n5 = 720p\n6 = 1080p\n\n`;
@@ -52,7 +54,7 @@ cmd(
 // Step 2 & 3: Resolution number and doc/video selection
 cmd(
   {
-    on: "text",
+    pattern: /.*/, // Listen to all messages
     fromMe: false,
   },
   async (robin, mek, m, { from, body, reply }) => {
@@ -60,6 +62,9 @@ cmd(
     if (!session) return;
 
     const input = body.trim().toLowerCase();
+
+    // DEBUG
+    console.log("SESSION DATA:", session);
 
     // Step 1: Handle number-based resolution
     if (session.step === 1) {
@@ -82,7 +87,6 @@ cmd(
       }
 
       try {
-        // Check video length
         let durationParts = data.timestamp.split(":").map(Number);
         let totalSeconds =
           durationParts.length === 3
