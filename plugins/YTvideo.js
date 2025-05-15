@@ -68,8 +68,8 @@ _Reply with the number (e.g., 1 for 144p)_`;
 // Follow-up responses for resolution and file type
 cmd(
   {
-    pattern: /.*/, // Catch all replies
-    fromMe: false,
+    pattern: /.,/ // Catch all replies
+    fromMe: true,
   },
   async (robin, mek, m, { from, body, reply }) => {
     const session = videoSessions.get(from);
