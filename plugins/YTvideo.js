@@ -13,6 +13,7 @@ const resolutionMap = {
   "6": "1080",
 };
 
+// Command to search and choose video
 cmd(
   {
     pattern: "video",
@@ -29,7 +30,7 @@ cmd(
       const data = search.videos[0];
       const url = data.url;
 
-      // Save session
+      // Save session to keep track of the user and video details
       videoSessions.set(from, { step: 1, url, data });
 
       const menu = `*❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
@@ -49,8 +50,9 @@ cmd(
 5 = 720p
 6 = 1080p
 
-_Reply with the number (e.g. 1 for 144p)_`;
+_Reply with the number (e.g., 1 for 144p)_`;
 
+      // Send video details and options to the user
       await robin.sendMessage(
         from,
         { image: { url: data.thumbnail }, caption: menu },
@@ -63,19 +65,20 @@ _Reply with the number (e.g. 1 for 144p)_`;
   }
 );
 
-// Follow-up responses
+// Follow-up responses for resolution and file type
 cmd(
   {
-    pattern: /.*/, // Catch replies
+    pattern: /.*/, // Catch all replies
     fromMe: false,
   },
   async (robin, mek, m, { from, body, reply }) => {
     const session = videoSessions.get(from);
     if (!session) return;
 
-    const input = body.trim().toLowerCase();
+    // Normalize input by stripping anything that is not a number
+    const input = body.trim().replace(/[^0-9]/g, "");
 
-    // Step 1: resolution select
+    // Step 1: Process resolution selection
     if (session.step === 1) {
       const quality = resolutionMap[input];
       if (!quality) return reply("❌ Invalid option. Reply with 1 to 6 for resolution.");
@@ -86,9 +89,10 @@ cmd(
       return reply(`✅ *${quality}p* selected. Now reply with \`video\` or \`doc\`.`);
     }
 
-    // Step 2: format select
+    // Step 2: Process file format selection (video or document)
     if (session.step === 2) {
-      if (!["video", "doc"].includes(input)) {
+      const inputType = body.trim().toLowerCase();
+      if (!["video", "doc"].includes(inputType)) {
         return reply("❌ Invalid type. Reply with `video` or `doc`.");
       }
 
@@ -130,7 +134,7 @@ cmd(
 
         const filename = `${title}_${quality}p.mp4`;
 
-        if (input === "doc") {
+        if (inputType === "doc") {
           await robin.sendMessage(
             from,
             {
