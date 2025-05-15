@@ -1,114 +1,137 @@
-const { cmd, commands } = require("../command");
+const { cmd } = require("../command");
 const yts = require("yt-search");
 const { ytmp4 } = require("@vreden/youtube_scraper");
 
+const videoSessions = new Map(); // Store sessions by user
+
+const resolutionMap = {
+  "1": "144",
+  "2": "240",
+  "3": "360",
+  "4": "480",
+  "5": "720",
+  "6": "1080",
+};
+
+// Step 1: Search for video and ask resolution
 cmd(
   {
     pattern: "video",
     react: "🎶",
-    desc: "Download Video",
+    desc: "Download YouTube Video",
     category: "download",
     filename: __filename,
   },
-  async (
-    robin,
-    mek,
-    m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
-  ) => {
+  async (robin, mek, m, { from, q, reply }) => {
     try {
-      if (!q) return reply("*Please Give A Name Or A Link To The Video* ❤️");
+      if (!q) return reply("*Please provide a video name or link.* ❤️");
 
-      // Search for the video
       const search = await yts(q);
       const data = search.videos[0];
       const url = data.url;
 
-      // Song metadata description
-      let desc = `
-*❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
+      // Save session step 1
+      videoSessions.set(from, { step: 1, url, data });
 
-👻 *Title* : ${data.title}
-👻 *Description* : ${data.description}
-👻 *Time* : ${data.timestamp}
-👻 *Ago* : ${data.ago}
-👻 *Views* : ${data.views}
-👻 *Url* : ${data.url}
+      let menu = `*🎬 Select a resolution:*\n\n`;
+      menu += `1 = 144p\n2 = 240p\n3 = 360p\n4 = 480p\n5 = 720p\n6 = 1080p\n\n`;
+      menu += `_Reply with a number (e.g. 1 for 144p)_`;
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
-`;
-
-      // Send metadata thumbnail message
       await robin.sendMessage(
         from,
-        { image: { url: data.thumbnail }, caption: desc },
+        { image: { url: data.thumbnail }, caption: menu },
         { quoted: mek }
       );
-
-      // Download the audio using @vreden/youtube_scraper
-      const quality = "128"; // Default quality
-      const songData = await ytmp4(url, quality);
-
-      // Validate song duration (limit: 30 minutes)
-      let durationParts = data.timestamp.split(":").map(Number);
-      let totalSeconds =
-        durationParts.length === 3
-          ? durationParts[0] * 3600 + durationParts[1] * 60 + durationParts[2]
-          : durationParts[0] * 60 + durationParts[1];
-
-      if (totalSeconds > 1800) {
-        return reply("⏱️ Video limit is 30 minitues");
-      }
-
-      // Send audio file
-      await robin.sendMessage(
-        from,
-        {
-          audio: { url: songData.download.url },
-          mimetype: "video/mp4",
-        },
-        { quoted: mek }
-      );
-
-      // Send as a document (optional)
-      await robin.sendMessage(
-        from,
-        {
-          document: { url: songData.download.url },
-          mimetype: "video/mp4",
-          fileName: `${data.title}.mp4`,
-          caption: "𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜",
-        },
-        { quoted: mek }
-      );
-
-      return reply("*VIDEO UPLOAD COMPLETED* ✅");
     } catch (e) {
       console.log(e);
-      reply(`❌ Error: ${e.message}`);
+      reply("❌ Failed to search for the video.");
+    }
+  }
+);
+
+// Step 2 & 3: Resolution number and doc/video selection
+cmd(
+  {
+    on: "text",
+    fromMe: false,
+  },
+  async (robin, mek, m, { from, body, reply }) => {
+    const session = videoSessions.get(from);
+    if (!session) return;
+
+    const input = body.trim().toLowerCase();
+
+    // Step 1: Handle number-based resolution
+    if (session.step === 1) {
+      const res = resolutionMap[input];
+      if (!res) return reply("❌ Invalid number. Please reply with 1 to 6.");
+
+      session.resolution = res;
+      session.step = 2;
+      videoSessions.set(from, session);
+
+      return reply(`✅ Resolution *${res}p* selected.\n\nNow reply with \`doc\` or \`video\``);
+    }
+
+    // Step 2: Handle format (doc or video)
+    if (session.step === 2) {
+      const { resolution, url, data } = session;
+
+      if (!["doc", "video"].includes(input)) {
+        return reply("❌ Invalid option. Please reply with `doc` or `video`.");
+      }
+
+      try {
+        // Check video length
+        let durationParts = data.timestamp.split(":").map(Number);
+        let totalSeconds =
+          durationParts.length === 3
+            ? durationParts[0] * 3600 + durationParts[1] * 60 + durationParts[2]
+            : durationParts[0] * 60 + durationParts[1];
+
+        if (totalSeconds > 1800) {
+          videoSessions.delete(from);
+          return reply("⏱️ Sorry, video must be less than 30 minutes.");
+        }
+
+        const videoData = await ytmp4(url, resolution);
+        if (!videoData?.download?.url) {
+          return reply(`❌ Couldn't fetch ${resolution}p video. Try another resolution.`);
+        }
+
+        const fileUrl = videoData.download.url;
+        const fileName = `${data.title}_${resolution}p.mp4`;
+
+        if (input === "doc") {
+          await robin.sendMessage(
+            from,
+            {
+              document: { url: fileUrl },
+              mimetype: "video/mp4",
+              fileName,
+              caption: "📁 Here is your video as a *document*.",
+            },
+            { quoted: mek }
+          );
+        } else {
+          await robin.sendMessage(
+            from,
+            {
+              video: { url: fileUrl },
+              mimetype: "video/mp4",
+              caption: "🎬 Here is your video file.",
+            },
+            { quoted: mek }
+          );
+        }
+
+        reply("✅ Video sent successfully!");
+        videoSessions.delete(from);
+      } catch (e) {
+        console.error(e);
+        reply("❌ Error downloading the video.");
+        videoSessions.delete(from);
+      }
     }
   }
 );
