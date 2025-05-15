@@ -69,7 +69,7 @@ _Reply with the number (e.g., 1 for 144p)_`;
 cmd(
   {
     pattern: /.,/ // Catch all replies
-    fromMe: true,
+    fromMe: false,
   },
   async (robin, mek, m, { from, body, reply }) => {
     const session = videoSessions.get(from);
