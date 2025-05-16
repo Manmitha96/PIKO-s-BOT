@@ -54,8 +54,8 @@ cmd(
 
       // Create the sticker from the media
       const sticker = new Sticker(media, {
-        pack: "PIKO", // Sticker pack name
-        author: "PIKO", // Sticker author name
+        pack: "✿✧✰𝑴ѧᗫĒ𝗕ῩⓅꮖ𐌊ỖＢỖＴ✰✧✿", // Sticker pack name
+        author: "＊*•̩̩͙✩•̩̩͙*˚Ᵽ𝗜𐌊Оɞʘ𐍄*•̩̩͙✩•̩̩͙*˚＊", // Sticker author name
         type: StickerTypes.FULL, // Sticker type (FULL or CROPPED)
         quality: 50, // Quality of the output sticker (0–100)
       });
