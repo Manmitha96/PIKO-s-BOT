@@ -1,12 +1,12 @@
-const { cmd, commands } = require("../command");
+const { cmd } = require("../command");
 const yts = require("yt-search");
-const { ytmp4 } = require("@vreden/youtube_scraper");
+const axios = require("axios");
 
 cmd(
   {
     pattern: "video",
-    react: "🎶",
-    desc: "Download Video",
+    react: "🎥",
+    desc: "Download YouTube Video",
     category: "download",
     filename: __filename,
   },
@@ -14,101 +14,81 @@ cmd(
     robin,
     mek,
     m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
+    { from, quoted, body, isCmd, command, args, q, isGroup, sender, reply }
   ) => {
     try {
-      if (!q) return reply("*Please Give A Name Or A Link To The Video* ❤️");
+      if (!q) return reply("*Provide a name or a YouTube link.* 🎥❤️");
 
       // Search for the video
       const search = await yts(q);
       const data = search.videos[0];
       const url = data.url;
 
-      // Song metadata description
-      let desc = `
-*❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
-
+      // Video metadata description
+      let desc = 🎥 *ROBIN MAX VIDEO DOWNLOADER* 🎥
+      
 👻 *Title* : ${data.title}
-👻 *Description* : ${data.description}
-👻 *Time* : ${data.timestamp}
-👻 *Ago* : ${data.ago}
+👻 *Duration* : ${data.timestamp}
 👻 *Views* : ${data.views}
-👻 *Url* : ${data.url}
+👻 *Uploaded* : ${data.ago}
+👻 *Channel* : ${data.author.name}
+👻 *Link* : ${data.url}
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
-`;
+𝐌𝐚𝐝𝐞 𝐛𝐲 ROBIN MAX
+;
 
-      // Send metadata thumbnail message
+      // Send metadata and thumbnail message
       await robin.sendMessage(
         from,
         { image: { url: data.thumbnail }, caption: desc },
         { quoted: mek }
       );
 
-      // Download the audio using @vreden/youtube_scraper
-      const quality = "128"; // Default quality
-      const songData = await ytmp4(url, quality);
+      // Video download function
+      const downloadVideo = async (url, quality) => {
+        const apiUrl = https://p.oceansaver.in/ajax/download.php?format=${quality}&url=${encodeURIComponent(
+          url
+        )}&api=dfcb6d76f2f6a9894gjkege8a4ab232222;
+        const response = await axios.get(apiUrl);
 
-      // Validate song duration (limit: 30 minutes)
-      let durationParts = data.timestamp.split(":").map(Number);
-      let totalSeconds =
-        durationParts.length === 3
-          ? durationParts[0] * 3600 + durationParts[1] * 60 + durationParts[2]
-          : durationParts[0] * 60 + durationParts[1];
+        if (response.data && response.data.success) {
+          const { id, title } = response.data;
 
-      if (totalSeconds > 1800) {
-        return reply("⏱️ Video limit is 30 minitues");
-      }
+          // Wait for download URL generation
+          const progressUrl = 'https://p.oceansaver.in/ajax/progress.php?id=${id}';
+          while (true) {
+            const progress = await axios.get(progressUrl);
+            if (progress.data.success && progress.data.progress === 1000) {
+              const videoBuffer = await axios.get(progress.data.download_url, {
+                responseType: "arraybuffer",
+              });
+              return { buffer: videoBuffer.data, title };
+            }
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+          }
+        } else {
+          throw new Error("Failed to fetch video details.");
+        }
+      };
 
-      // Send audio file
+      // Specify desired quality (default: 720p)
+      const quality = "720";
+
+      // Download and send video
+      const video = await downloadVideo(url, quality);
       await robin.sendMessage(
         from,
         {
-          audio: { url: songData.download.url },
-          mimetype: "video/mp4",
+          video: video.buffer,
+          caption: '🎥 *${video.title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 ROBIN MAX',
         },
         { quoted: mek }
       );
 
-      // Send as a document (optional)
-      await robin.sendMessage(
-        from,
-        {
-          document: { url: songData.download.url },
-          mimetype: "video/mp4",
-          fileName: `${data.title}.mp4`,
-          caption: "𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* 💜",
-        },
-        { quoted: mek }
-      );
-
-      return reply("*VIDEO UPLOAD COMPLETED* ✅");
+      reply("*Thanks for using my bot!* 🎥❤️");
     } catch (e) {
-      console.log(e);
-      reply(`❌ Error: ${e.message}`);
+      console.error(e);
+      reply('❌ Error: ${e.message}');
     }
   }
 );
