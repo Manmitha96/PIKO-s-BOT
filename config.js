@@ -12,4 +12,8 @@ module.exports = {
   ALIVE_IMG: process.env.ALIVE_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
   ALIVE_MSG: process.env.ALIVE_MSG || "Hello , I am alive now!!\n\n*☯️OWNED BY P_I_K_O☯️*",
   MODE: process.env.MODE || "public",
+  AUTO_VOICE: process.env.AUTO_VOICE || "true",
+  AUTO_STICKER: process.env.AUTO_STICKER || "true",
+  AUTO_REPLY: process.env.AUTO_REPLY || "true",
+  
 };
