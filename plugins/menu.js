@@ -83,8 +83,8 @@ ${menu.group}
     ▫️.demote
     ▫️.promote
 | *CONVERT COMMANDS* |
-    ▫️.sticker <reply img>
-    ▫️.img <reply sticker>
+    ▫️.tosticker <reply img>
+    ▫️.toimg <reply sticker>
     ▫️.tr <lang><text>
     ▫️.tts <text>
 | *SEARCH COMMANDS* |
