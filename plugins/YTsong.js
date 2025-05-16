@@ -49,7 +49,7 @@ cmd(
 
       // Song metadata description
       let desc = `
-*❤️💟 PIKO YT VIDEO DOWNLOADER 💜*
+*❤️💟 PIKO YT SONG DOWNLOADER 💜*
 
 👻 *Title* : ${data.title}
 👻 *Description* : ${data.description}
