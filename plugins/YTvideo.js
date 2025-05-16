@@ -17,7 +17,7 @@ cmd(
     { from, quoted, body, isCmd, command, args, q, isGroup, sender, reply }
   ) => {
     try {
-      if (!q) return reply("*Provide a name or a YouTube link.* 🎥❤️");
+      if (!q) return reply("*Provide a name or a YouTube link.* 🎥💜");
 
       // Search for the video
       const search = await yts(q);
@@ -25,7 +25,7 @@ cmd(
       const url = data.url;
 
       // Video metadata description
-      let desc = `🎥 *ROBIN MAX VIDEO DOWNLOADER* 🎥
+      let desc = `🎥 *PIKO YT VIDEO DOWNLOADER* 🎥
 
 👻 *Title* : ${data.title}
 👻 *Duration* : ${data.timestamp}
@@ -34,7 +34,7 @@ cmd(
 👻 *Channel* : ${data.author.name}
 👻 *Link* : ${data.url}
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 ROBIN MAX
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️
 `;
 
       // Send metadata and thumbnail message
@@ -80,12 +80,12 @@ cmd(
         from,
         {
           video: video.buffer,
-          caption: `🎥 *${video.title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 ROBIN MAX`,
+          caption: `🎥 *${video.title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`,
         },
         { quoted: mek }
       );
 
-      reply("*Thanks for using my bot!* 🎥❤️");
+      reply("*Thanks for using my bot!* 🎥💙");
     } catch (e) {
       console.error(e);
       reply(`❌ Error: ${e.message}`);
