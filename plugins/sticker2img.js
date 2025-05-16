@@ -7,6 +7,7 @@ cmd(
   {
     pattern: "toimg",
     alias: ["img", "photo"],
+    react: "📷",
     desc: "Convert a sticker to an image",
     category: "utility",
     filename: __filename,
