@@ -63,12 +63,14 @@ cmd(
     ▫️.alive
     ▫️.menu
     ▫️.ai <text>
+    ▫️.gemini <text>
     ▫️.system
     ▫️.owner
 | *DOWNLOAD COMMANDS* |
     ▫️.song <text>
     ▫️.video <text>
     ▫️.fb <link>
+    ▫️.movie <text>
 | *GROUP COMMANDS* |
 ${menu.group}
 | *OWNER COMMANDS* |
