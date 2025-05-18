@@ -36,7 +36,7 @@ cmd(
 5. 🪄 Convert Commands
 6. 🔎 Search Commands
 
-_Reply with a number (e.g., 1) to view the commands in that category._
+*_Reply with a number e.g.( .1 ) to view the commands in that category._*
 
 ☯️ Made by P_I_K_O`;
 
