@@ -1,115 +1,69 @@
-const { cmd, commands } = require("../command");
-const config = require('../config');
+// commands/menu.js
+
+const { cmd } = require("../command");
+const config = require("../config");
+const os = require("os");
+
+// Temporary state storage
+let menuReplyState = {};
+
 cmd(
   {
     pattern: "menu",
-    alise: ["getmenu"],
-    react : "💙",
-    desc: "get cmd list",
+    alias: ["getmenu"],
+    react: "💙",
+    desc: "Get command list",
     category: "main",
     filename: __filename,
   },
-  async (
-    robin,
-    mek,
-    m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
-  ) => {
+  async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
     try {
-      let menu = {
-        main: "",
-        download: "",
-        group: "",
-        owner: "",
-        convert: "",
-        search: "",
-      };
+      // System info
+      let uptime = (process.uptime() / 60).toFixed(2); // minutes
+      let used = process.memoryUsage().heapUsed / 1024 / 1024;
+      let ramUsage = `${Math.round(used * 100) / 100} MB`;
 
-      for (let i = 0; i < commands.length; i++) {
-        if (commands[i].pattern && !commands[i].dontAddCommandList) {
-          menu[
-            commands[i].category
-          ] += `${config.PREFIX}${commands[i].pattern}\n`;
-        }
-      }
+      // Build main menu
+      let madeMenu = `👋 *Hello ${pushname}*
 
-      let madeMenu = `👋 *Hello  ${pushname}*
+🕐 *Uptime:* ${uptime} minutes
+📦 *RAM Usage:* ${ramUsage}
 
+📍 *Select a Category by replying with a number:*
 
-| *MAIN COMMANDS* |
-    ▫️.alive
-    ▫️.menu
-    ▫️.ai <text>
-    ▫️.gemini <text>
-    ▫️.system
-    ▫️.owner
-| *DOWNLOAD COMMANDS* |
-    ▫️.song <text>
-    ▫️.video <text>
-    ▫️.fb <link>
-    ▫️.movie <text>
-| *GROUP COMMANDS* |
-${menu.group}
-| *OWNER COMMANDS* |
-    ▫️.restart
-    ▫️.update
-    ▫️.block
-    ▫️.kick
-    ▫️.left
-    ▫️.left
-    ▫️.mute
-    ▫️.add <+94 xxxxxxxxx>
-    ▫️.demote
-    ▫️.promote
-| *CONVERT COMMANDS* |
-    ▫️.tosticker <reply img>
-    ▫️.toimg <reply sticker>
-    ▫️.tr <lang><text>
-    ▫️.tts <text>
-| *SEARCH COMMANDS* |
-${menu.search}
+1. 🛠️ Main Commands
+2. ⬇️ Download Commands
+3. 👥 Group Commands
+4. 👑 Owner Commands
+5. 🌀 Convert Commands
+6. 🔎 Search Commands
 
+_Reply with a number (e.g., 1) to view the commands in that category._
 
-☯️𝐌𝐚𝐝𝐞 𝐛𝐲 P_I_K_O☯️
+☯️ Made by P_I_K_O`;
 
-> PIKO MENU MSG
-`;
+      // Send menu
       await robin.sendMessage(
         from,
         {
           image: {
-            url: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0145.jpg",
+            url: config.ALIVE_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0145.jpg",
           },
           caption: madeMenu,
         },
         { quoted: mek }
       );
+
+      // Mark user as “in menu mode”
+      menuReplyState[senderNumber] = {
+        expecting: true,
+        timestamp: Date.now(),
+      };
     } catch (e) {
-      console.log(e);
-      reply(`${e}`);
+      console.error(e);
+      reply(`Error: ${e.message}`);
     }
   }
 );
+
+module.exports = { menuReplyState };
