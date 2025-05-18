@@ -4,7 +4,269 @@ const {
   DisconnectReason,
   jidNormalizedUser,
   getContentType,
+  fetchLatestBaileysVersion,const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason,
+  jidNormalizedUser,
+  getContentType,
   fetchLatestBaileysVersion,
+  Browsers,
+} = require("@whiskeysockets/baileys");
+
+const l = console.log;
+const {
+  getBuffer,
+  getGroupAdmins,
+  getRandom,
+  h2k,
+  isUrl,
+  Json,
+  runtime,
+  sleep,
+  fetchJson,
+} = require("./lib/functions");
+const fs = require("fs");
+const P = require("pino");
+const config = require("./config");
+const qrcode = require("qrcode-terminal");
+const util = require("util");
+const { sms, downloadMediaMessage } = require("./lib/msg");
+const axios = require("axios");
+const { File } = require("megajs");
+const prefix = config.PREFIX;
+const ownerNumber = config.OWNER_NUM;
+
+// import menu state and commands
+const { menuReplyState } = require("./commands/menu");
+const { commands }       = require("./command");
+
+//===================SESSION-AUTH============================
+if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
+  if (!config.SESSION_ID)
+    return console.log("Please add your session to SESSION_ID env !!");
+  const sessdata = config.SESSION_ID;
+  const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
+  filer.download((err, data) => {
+    if (err) throw err;
+    fs.writeFile(__dirname + "/auth_info_baileys/creds.json", data, () => {
+      console.log("SESSION DOWNLOADED ✅");
+    });
+  });
+}
+
+const express = require("express");
+const app = express();
+const port = process.env.PORT || 8000;
+
+async function connectToWA() {
+  console.log("Connecting 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝");
+  const { state, saveCreds } = await useMultiFileAuthState(
+    __dirname + "/auth_info_baileys/"
+  );
+  var { version } = await fetchLatestBaileysVersion();
+
+  const robin = makeWASocket({
+    logger: P({ level: "silent" }),
+    printQRInTerminal: false,
+    browser: Browsers.macOS("Firefox"),
+    syncFullHistory: true,
+    auth: state,
+    version,
+  });
+
+  robin.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === "close") {
+      if (
+        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+      ) {
+        connectToWA();
+      }
+    } else if (connection === "open") {
+      console.log(" Installing... ");
+      const path = require("path");
+      fs.readdirSync("./plugins/").forEach((plugin) => {
+        if (path.extname(plugin).toLowerCase() == ".js") {
+          require("./plugins/" + plugin);
+        }
+      });
+      console.log("💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 installed successful ✅");
+      console.log("💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 connected to whatsapp ✅");
+
+      let up = `💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 connected successful ✅`;
+      let up1 = `Hello PIKO, I made bot successful`;
+
+      robin.sendMessage(ownerNumber + "@s.whatsapp.net", {
+        image: {
+          url: `https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg`,
+        },
+        caption: up,
+      });
+      robin.sendMessage("94726939427@s.whatsapp.net", {
+        image: {
+          url: `https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg`,
+        },
+        caption: up1,
+      });
+    }
+  });
+
+  robin.ev.on("creds.update", saveCreds);
+  robin.ev.on("messages.upsert", async (mek) => {
+    mek = mek.messages[0];
+    if (!mek.message) return;
+    mek.message =
+      getContentType(mek.message) === "ephemeralMessage"
+        ? mek.message.ephemeralMessage.message
+        : mek.message;
+    if (mek.key && mek.key.remoteJid === "status@broadcast") return;
+
+    const m = sms(robin, mek);
+    const type = getContentType(mek.message);
+    const content = JSON.stringify(mek.message);
+    const from = mek.key.remoteJid;
+    const quoted =
+      type == "extendedTextMessage" &&
+      mek.message.extendedTextMessage.contextInfo != null
+        ? mek.message.extendedTextMessage.contextInfo.quotedMessage || []
+        : [];
+    const body =
+      type === "conversation"
+        ? mek.message.conversation
+        : type === "extendedTextMessage"
+        ? mek.message.extendedTextMessage.text
+        : type == "imageMessage" && mek.message.imageMessage.caption
+        ? mek.message.imageMessage.caption
+        : type == "videoMessage" && mek.message.videoMessage.caption
+        ? mek.message.videoMessage.caption
+        : "";
+    const sender = mek.key.fromMe
+      ? robin.user.id.split(":")[0] + "@s.whatsapp.net"
+      : mek.key.participant || mek.key.remoteJid;
+    const senderNumber = sender.split("@")[0];
+
+    // —— MENU-REPLY HANDLER ——
+    if (menuReplyState[senderNumber]?.expecting) {
+      const selected = body.trim();
+      const categoryMap = {
+        "1": "download",
+        "2": "main",
+        "3": "group",
+        "4": "owner",
+        "5": "convert",
+        "6": "search",
+      };
+
+      if (categoryMap[selected]) {
+        const selectedCat = categoryMap[selected];
+        const catCommands = commands
+          .filter(
+            (cmd) =>
+              cmd.category === selectedCat &&
+              cmd.pattern &&
+              !cmd.dontAddCommandList
+          )
+          .map((cmd) => `▫️ ${config.PREFIX}${cmd.pattern}`)
+          .join("\n");
+
+        const response = `📂 *${selectedCat.toUpperCase()} COMMANDS*\n\n${catCommands ||
+          "No commands found."}`;
+        await robin.sendMessage(from, { text: response }, { quoted: mek });
+      } else {
+        await robin.sendMessage(
+          from,
+          { text: "❌ Invalid selection. Please use .menu again." },
+          { quoted: mek }
+        );
+      }
+
+      delete menuReplyState[senderNumber];
+      return; // stop further processing
+    }
+
+    // existing command-dispatch logic
+    const isCmd = body.startsWith(prefix);
+    const commandName = isCmd
+      ? body.slice(prefix.length).trim().split(" ")[0].toLowerCase()
+      : "";
+    const args = body.trim().split(/ +/).slice(1);
+    const q = args.join(" ");
+    const isGroup = from.endsWith("@g.us");
+    const pushname = mek.pushName || "Sin Nombre";
+    const isMe = robin.user.id.split(":")[0].includes(senderNumber);
+    const isOwner = ownerNumber.includes(senderNumber) || isMe;
+
+    // your owner react and mode checks…
+    // then normal events.commands dispatch
+    if (isCmd) {
+      const cmd =
+        commands.find((c) => c.pattern === commandName) ||
+        commands.find((c) => c.alias && c.alias.includes(commandName));
+      if (cmd) {
+        if (cmd.react)
+          robin.sendMessage(from, { react: { text: cmd.react, key: mek.key } });
+
+        try {
+          cmd.function(robin, mek, m, {
+            from,
+            quoted,
+            body,
+            isCmd,
+            command: commandName,
+            args,
+            q,
+            isGroup,
+            sender,
+            senderNumber,
+            botNumber2: await jidNormalizedUser(robin.user.id),
+            botNumber: robin.user.id.split(":")[0],
+            pushname,
+            isMe,
+            isOwner,
+            groupMetadata: isGroup
+              ? await robin.groupMetadata(from).catch(() => {})
+              : {},
+            participants: isGroup
+              ? await getGroupAdmins(
+                  (
+                    await robin.groupMetadata(from)
+                  ).participants
+                )
+              : [],
+          });
+        } catch (e) {
+          console.error("[PLUGIN ERROR] " + e);
+        }
+      }
+    }
+
+  });
+
+  // cleanup stale menu states every 30s
+  setInterval(() => {
+    const now = Date.now();
+    for (let user in menuReplyState) {
+      if (now - menuReplyState[user].timestamp > 60000) {
+        delete menuReplyState[user];
+      }
+    }
+  }, 30000);
+
+  app.get("/", (req, res) => {
+    res.send("hey, 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝-BOT started✅");
+  });
+  app.listen(port, () =>
+    console.log(`Server listening on port http://localhost:${port}`)
+  );
+
+  setTimeout(() => {
+    connectToWA();
+  }, 4000);
+}
+
+connectToWA();
+
   Browsers,
 } = require("@whiskeysockets/baileys");
 
