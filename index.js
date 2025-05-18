@@ -1,4 +1,8 @@
 // index.js
+
+// — Quick startup log to verify we’re here —
+console.log("▶︎ index.js starting up…");
+
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -9,13 +13,13 @@ const {
   Browsers,
 } = require("@whiskeysockets/baileys");
 
-const fs = require("fs");
-const P = require("pino");
+const fs    = require("fs");
+const P     = require("pino");
 const express = require("express");
 const axios = require("axios");
-const qrcode = require("qrcode-terminal");
-const util = require("util");
 const { File } = require("megajs");
+const qrcode  = require("qrcode-terminal");
+const util    = require("util");
 const {
   getBuffer,
   getGroupAdmins,
@@ -27,23 +31,34 @@ const {
   sleep,
   fetchJson,
 } = require("./lib/functions");
-const { sms, downloadMediaMessage } = require("./lib/msg");
-const config = require("./config");
-const prefix = config.PREFIX;
+const { sms } = require("./lib/msg");
+const config      = require("./config");
+const prefix      = config.PREFIX;
 const ownerNumber = config.OWNER_NUM;
 
-// import menu state and commands
-const { menuReplyState } = require("./plugins/menu");
+// Load your commands array
 const { commands } = require("./command");
 
-// SESSION AUTH
+// Safely load menuReplyState from plugins/menu.js
+let menuReplyState = {};
+try {
+  ({ menuReplyState } = require("./plugins/menu"));
+  console.log("▶︎ menuReplyState loaded:", typeof menuReplyState);
+} catch (e) {
+  console.error("❌ Failed to load menu plugin:", e);
+  // leave menuReplyState = {} so bot still runs
+}
+
+const app  = express();
+const port = process.env.PORT || 8000;
+
+// If no saved session, download from MEGA
 if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
   if (!config.SESSION_ID) {
-    console.log("Please add your session to SESSION_ID env !!");
+    console.error("Please add your SESSION_ID to the environment!");
     process.exit(1);
   }
-  const sessdata = config.SESSION_ID;
-  const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
+  const filer = File.fromURL(`https://mega.nz/file/${config.SESSION_ID}`);
   filer.download((err, data) => {
     if (err) throw err;
     fs.writeFileSync(__dirname + "/auth_info_baileys/creds.json", data);
@@ -51,11 +66,10 @@ if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
   });
 }
 
-const app = express();
-const port = process.env.PORT || 8000;
-
 async function connectToWA() {
-  console.log("Connecting 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝");
+  console.log("Connecting to WhatsApp…");
+
+  // load auth state
   const { state, saveCreds } = await useMultiFileAuthState(
     __dirname + "/auth_info_baileys/"
   );
@@ -70,39 +84,28 @@ async function connectToWA() {
     version,
   });
 
-  // connection events
-  robin.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect } = update;
-    if (connection === "close") {
-      if (
-        lastDisconnect.error.output.statusCode !==
-        DisconnectReason.loggedOut
-      ) {
-        connectToWA();
-      }
+  robin.ev.on("connection.update", (u) => {
+    const { connection, lastDisconnect } = u;
+    if (connection === "close" &&
+        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
+      connectToWA();
     } else if (connection === "open") {
-      console.log("Bot installed & connected ✅");
-      // load plugins
-      const path = require("path");
+      console.log("► Connected — loading plugins…");
+      // load plugins folder
       fs.readdirSync("./plugins/")
-        .filter((f) => f.endsWith(".js"))
-        .forEach((plugin) => require(path.join(__dirname, "plugins", plugin)));
+        .filter(f => f.endsWith(".js"))
+        .forEach(f => require(`./plugins/${f}`));
+      console.log("► All plugins loaded. Bot is ready.");
       // notify owner
-      const upMsg = "Bot connected successfully ✅";
       robin.sendMessage(ownerNumber + "@s.whatsapp.net", {
-        image: {
-          url:
-            config.ALIVE_IMG ||
-            "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg",
-        },
-        caption: upMsg,
+        image: { url: config.ALIVE_IMG },
+        caption: "Bot connected successfully ✅",
       });
     }
   });
 
   robin.ev.on("creds.update", saveCreds);
 
-  // global message handler
   robin.ev.on("messages.upsert", async ({ messages, type }) => {
     if (type !== "notify") return;
     let mek = messages[0];
@@ -114,21 +117,23 @@ async function connectToWA() {
     }
     if (mek.key.remoteJid === "status@broadcast") return;
 
-    const m = sms(robin, mek);
-    const typeMsg = getContentType(mek.message);
-    const from = mek.key.remoteJid;
+    const m      = sms(robin, mek);
+    const msgType = getContentType(mek.message);
+    const from   = mek.key.remoteJid;
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net"
       : mek.key.participant || from;
     const senderNumber = sender.split("@")[0];
+
+    // extract body text
     const body =
-      typeMsg === "conversation"
+      msgType === "conversation"
         ? mek.message.conversation
-        : typeMsg === "extendedTextMessage"
+        : msgType === "extendedTextMessage"
         ? mek.message.extendedTextMessage.text
-        : typeMsg === "imageMessage" && mek.message.imageMessage.caption
+        : msgType === "imageMessage" && mek.message.imageMessage.caption
         ? mek.message.imageMessage.caption
-        : typeMsg === "videoMessage" && mek.message.videoMessage.caption
+        : msgType === "videoMessage" && mek.message.videoMessage.caption
         ? mek.message.videoMessage.caption
         : "";
 
@@ -143,30 +148,20 @@ async function connectToWA() {
         "5": "convert",
         "6": "search",
       };
-
       if (categoryMap[selected]) {
-        const selectedCat = categoryMap[selected];
-        const cmds = commands
-          .filter(
-            (c) =>
-              c.category === selectedCat &&
-              c.pattern &&
-              !c.dontAddCommandList
-          )
-          .map((c) => `▫️ ${config.PREFIX}${c.pattern}`)
+        const cat = categoryMap[selected];
+        const list = commands
+          .filter(c => c.category === cat && c.pattern && !c.dontAddCommandList)
+          .map(c => `▫️ ${config.PREFIX}${c.pattern}`)
           .join("\n");
-        const response = `📂 *${selectedCat.toUpperCase()} COMMANDS*\n\n${
-          cmds || "No commands found."
-        }`;
-        await robin.sendMessage(from, { text: response }, { quoted: mek });
+        await robin.sendMessage(from, {
+          text: `📂 *${cat.toUpperCase()} COMMANDS*\n\n${list || "No commands found."}`
+        }, { quoted: mek });
       } else {
-        await robin.sendMessage(
-          from,
-          { text: "❌ Invalid selection. Please use .menu again." },
-          { quoted: mek }
-        );
+        await robin.sendMessage(from, {
+          text: "❌ Invalid selection. Please type `.menu` again."
+        }, { quoted: mek });
       }
-
       delete menuReplyState[senderNumber];
       return;
     }
@@ -181,29 +176,26 @@ async function connectToWA() {
     const q = args.join(" ");
     const isGroup = from.endsWith("@g.us");
     const pushname = mek.pushName || "No Name";
-    const isOwner =
-      ownerNumber.includes(senderNumber) || mek.key.fromMe === true;
+    const isOwner = ownerNumber.includes(senderNumber) || mek.key.fromMe;
 
-    // permission checks
+    // permission gates
     if (!isOwner && config.MODE === "private") return;
-    if (!isOwner && isGroup && config.MODE === "inbox") return;
+    if (!isOwner && isGroup  && config.MODE === "inbox") return;
     if (!isOwner && !isGroup && config.MODE === "groups") return;
 
-    // dispatch command
     if (isCmd) {
       const cmdObj =
-        commands.find((c) => c.pattern === commandName) ||
-        commands.find((c) => c.alias && c.alias.includes(commandName));
+        commands.find(c => c.pattern === commandName) ||
+        commands.find(c => c.alias && c.alias.includes(commandName));
       if (cmdObj) {
-        if (cmdObj.react)
-          robin.sendMessage(from, {
-            react: { text: cmdObj.react, key: mek.key },
-          });
+        if (cmdObj.react) {
+          robin.sendMessage(from, { react: { text: cmdObj.react, key: mek.key } });
+        }
         try {
           await cmdObj.function(robin, mek, m, {
             from,
             quoted:
-              typeMsg === "extendedTextMessage"
+              msgType === "extendedTextMessage"
                 ? mek.message.extendedTextMessage.contextInfo.quotedMessage
                 : {},
             body,
@@ -222,9 +214,7 @@ async function connectToWA() {
               ? await robin.groupMetadata(from).catch(() => ({}))
               : {},
             participants: isGroup
-              ? await getGroupAdmins(
-                  (await robin.groupMetadata(from)).participants
-                )
+              ? await getGroupAdmins((await robin.groupMetadata(from)).participants)
               : [],
           });
         } catch (e) {
@@ -237,17 +227,16 @@ async function connectToWA() {
   // cleanup stale menu states
   setInterval(() => {
     const now = Date.now();
-    for (let user in menuReplyState) {
-      if (now - menuReplyState[user].timestamp > 60000) {
-        delete menuReplyState[user];
+    for (let u in menuReplyState) {
+      if (now - menuReplyState[u].timestamp > 60000) {
+        delete menuReplyState[u];
       }
     }
   }, 30000);
 
-  app.get("/", (req, res) => res.send("Bot is running ✅"));
-  app.listen(port, () =>
-    console.log(`Server listening on http://localhost:${port}`)
-  );
+  // HTTP keepalive
+  app.get("/", (req, res) => res.send("Bot is up ✅"));
+  app.listen(port, () => console.log(`Server on http://localhost:${port}`));
 }
 
 connectToWA();
