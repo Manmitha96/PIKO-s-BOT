@@ -9,8 +9,7 @@ let menuReplyState = {};
 
 cmd(
   {
-    pattern: "menu",
-    alias: ["getmenu"],
+    pattern: "1",
     react: "📜",
     desc: "Get command list",
     category: "main",
