@@ -9,7 +9,7 @@ let menuReplyState = {};
 
 cmd(
   {
-    pattern: "1",
+    pattern: "2",
     react: "📜",
     desc: "Get command list",
     category: "main",
