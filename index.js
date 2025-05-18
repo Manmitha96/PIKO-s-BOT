@@ -33,7 +33,7 @@ const prefix = config.PREFIX;
 const ownerNumber = config.OWNER_NUM;
 
 // import menu state and commands
-const { menuReplyState } = require("./commands/menu");
+const { menuReplyState } = require("./plugins/menu");
 const { commands } = require("./command");
 
 // SESSION AUTH
