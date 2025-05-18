@@ -1,4 +1,4 @@
-// commands/menu.js
+// plugins/menu.js
 
 const { cmd } = require("../command");
 const config = require("../config");
@@ -18,12 +18,10 @@ cmd(
   },
   async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
     try {
-      // System info
-      let uptime = (process.uptime() / 60).toFixed(2); // minutes
+      let uptime = (process.uptime() / 60).toFixed(2);
       let used = process.memoryUsage().heapUsed / 1024 / 1024;
       let ramUsage = `${Math.round(used * 100) / 100} MB`;
 
-      // Build main menu
       let madeMenu = `👋 *Hello ${pushname}*
 
 🕐 *Uptime:* ${uptime} minutes
@@ -42,19 +40,15 @@ _Reply with a number (e.g., 1) to view the commands in that category._
 
 ☯️ Made by P_I_K_O`;
 
-      // Send menu
       await robin.sendMessage(
         from,
         {
-          image: {
-            url: config.ALIVE_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0145.jpg",
-          },
+          image: { url: config.ALIVE_IMG },
           caption: madeMenu,
         },
         { quoted: mek }
       );
 
-      // Mark user as “in menu mode”
       menuReplyState[senderNumber] = {
         expecting: true,
         timestamp: Date.now(),
