@@ -29,11 +29,11 @@ cmd(
 
 📍 *Select a Category by replying with a number:*
 
-1. 🛠️ Main Commands
-2. ⬇️ Download Commands
-3. 👥 Group Commands
+1. ⚔️ Main Commands
+2. 🔮 Download Commands
+3. 🔐 Group Commands
 4. 👑 Owner Commands
-5. 🌀 Convert Commands
+5. 🪄 Convert Commands
 6. 🔎 Search Commands
 
 _Reply with a number (e.g., 1) to view the commands in that category._
