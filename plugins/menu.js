@@ -11,7 +11,7 @@ cmd(
   {
     pattern: "menu",
     alias: ["getmenu"],
-    react: "💙",
+    react: "📜",
     desc: "Get command list",
     category: "main",
     filename: __filename,
