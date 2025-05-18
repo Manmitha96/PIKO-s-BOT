@@ -28,12 +28,12 @@ cmd(
 
 🔮 *DOWNLOAD COMMANDS:*
 
-1.▫️.song <text>
-2.▫️.video <text>
-3.▫️.fb <link>
-4.▫️.movie <text>
-5.▫️.Coming soon
-6.▫️.Coming soon
+1. ▪️.song <text>
+2. ▪️.video <text>
+3. ▪️.fb <link>
+4. ▪️.movie <text>
+5. ▪️.Coming soon
+6. ▪️.Coming soon
 
 *_Reply with a command to download that category._*
 
