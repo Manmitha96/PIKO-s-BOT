@@ -35,7 +35,7 @@ cmd(
 5.▫️.Coming soon
 6.▫️.Coming soon
 
-*_Reply with a number e.g (.1) to view the commands in that category._*
+*_Reply with a command to download that category._*
 
 ☯️ 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*`;
 
