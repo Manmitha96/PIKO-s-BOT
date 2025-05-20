@@ -5,31 +5,33 @@ cmd(
   {
     pattern: "vv",
     alias: ["viewonce", "savevo"],
-    desc: "Download View Once media (image, video, audio)",
+    desc: "Download View Once media (image, video)",
     category: "media",
     filename: __filename,
   },
   async (robin, m, msg, { from, quoted, reply }) => {
     try {
-      if (
-        !quoted ||
-        !quoted.message ||
-        !quoted.message.viewOnceMessage ||
-        typeof quoted.message.viewOnceMessage !== "object"
-      ) {
-        return reply("❌ Please reply to a *view-once photo, video or voice* message.");
+      if (!quoted || !quoted.message) {
+        return reply("❌ Please reply to a *view-once photo or video* message.");
       }
 
-      // Get the actual media message inside viewOnce
-      const viewOnceMsg = quoted.message.viewOnceMessage.message;
-      const mediaType = Object.keys(viewOnceMsg)[0]; // e.g., 'imageMessage'
+      // Support both viewOnceMessage and viewOnceMessageV2
+      const voMsg =
+        quoted.message.viewOnceMessage || quoted.message.viewOnceMessageV2;
 
-      if (!["imageMessage", "videoMessage", "audioMessage"].includes(mediaType)) {
-        return reply("⚠️ Unsupported media type. Only image, video, or voice is allowed.");
+      if (!voMsg || typeof voMsg !== "object" || !voMsg.message) {
+        return reply("❌ This is not a valid view-once media message.");
+      }
+
+      const viewOnceMsg = voMsg.message;
+      const mediaType = Object.keys(viewOnceMsg)[0];
+
+      if (!["imageMessage", "videoMessage"].includes(mediaType)) {
+        return reply("⚠️ Unsupported media type. Only *image* or *video* are allowed.");
       }
 
       const buffer = await downloadMediaMessage(
-        { message: quoted.message.viewOnceMessage },
+        { message: voMsg },
         "buffer",
         {},
         {
@@ -40,14 +42,12 @@ cmd(
 
       if (!buffer) return reply("⚠️ Failed to download media.");
 
+      const mediaKey = mediaType === "imageMessage" ? "image" : "video";
+
       await robin.sendMessage(
         from,
         {
-          [mediaType === "imageMessage"
-            ? "image"
-            : mediaType === "videoMessage"
-            ? "video"
-            : "audio"]: buffer,
+          [mediaKey]: buffer,
           caption: "✅ View-once media saved.",
         },
         { quoted: m }
