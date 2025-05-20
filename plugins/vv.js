@@ -13,17 +13,17 @@ cmd(
   },
   async (robin, mek, m, { from, quoted, reply }) => {
     try {
-      // Check if the message contains a view-once media (photo, video, or voice)
-      if (!quoted || !quoted.viewOnceMessage) {
-        return reply("❌ Please reply to a *view-once photo, video, or voice* message.");
+      // Ensure that a message is quoted and it's a view-once message
+      if (!quoted || !quoted.message || !quoted.message.viewOnceMessage) {
+        return reply("❌ Please reply to a *view-once photo, video or voice* message.");
       }
 
-      const message = quoted.viewOnceMessage.message;
+      const message = quoted.message.viewOnceMessage.message;
       const type = Object.keys(message)[0];  // Get the type of the media (image, video, etc.)
 
       // If it's an image, video, or voice message, download it
       if (type === "imageMessage" || type === "videoMessage" || type === "audioMessage") {
-        const buffer = await downloadMediaMessage({ message }, "viewOnce");
+        const buffer = await downloadMediaMessage({ message: quoted.message.viewOnceMessage }, "viewOnce");
 
         // Handle if download fails
         if (!buffer) return reply("⚠️ Failed to download media. Please try again.");
