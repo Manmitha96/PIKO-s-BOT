@@ -15,29 +15,22 @@ cmd(
         return reply("❌ Please reply to a *view-once photo or video* message.");
       }
 
-      // Support both viewOnceMessage and viewOnceMessageV2
-      const voMsg =
-        quoted.message.viewOnceMessage || quoted.message.viewOnceMessageV2;
+      const viewOnceMsg =
+        quoted.message?.viewOnceMessageV2?.message ||
+        quoted.message?.viewOnceMessage?.message;
 
-      if (!voMsg || typeof voMsg !== "object" || !voMsg.message) {
-        return reply("❌ This is not a valid view-once media message.");
+      if (!viewOnceMsg) {
+        return reply("❌ Not a valid view-once message.");
       }
 
-      const viewOnceMsg = voMsg.message;
       const mediaType = Object.keys(viewOnceMsg)[0];
-
       if (!["imageMessage", "videoMessage"].includes(mediaType)) {
         return reply("⚠️ Unsupported media type. Only *image* or *video* are allowed.");
       }
 
       const buffer = await downloadMediaMessage(
-        { message: voMsg },
-        "buffer",
-        {},
-        {
-          logger: undefined,
-          reuploadRequest: async () => {},
-        }
+        { message: { [mediaType]: viewOnceMsg[mediaType] }, key: quoted.key },
+        "buffer"
       );
 
       if (!buffer) return reply("⚠️ Failed to download media.");
@@ -52,8 +45,8 @@ cmd(
         },
         { quoted: m }
       );
-    } catch (e) {
-      console.error("View Once Error:", e);
+    } catch (err) {
+      console.error("View Once Error:", err);
       reply("❌ Error saving media.");
     }
   }
