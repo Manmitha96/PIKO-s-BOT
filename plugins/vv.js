@@ -21,7 +21,7 @@ cmd(
         mode = data.mode || "owner";
       }
 
-      const allowedUsers = ["94712345678@s.whatsapp.net"]; // Change to your number
+      const allowedUsers = ["94726939427@s.whatsapp.net"]; // Change to your number
       if (mode === "owner" && !isOwner && !allowedUsers.includes(senderNumber)) {
         return reply("❌ Only the *owner* can use this command right now.");
       }
