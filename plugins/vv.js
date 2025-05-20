@@ -1,48 +1,60 @@
 const { cmd } = require("../command");
-const { downloadMediaMessage } = require('@adiwajshing/baileys');  // Baileys library to download media
-const fs = require("fs");
-const path = require("path");
+const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 
 cmd(
   {
-    pattern: "vv",  // Command to use
-    alias: ["viewonce", "savevo"],  // Aliases for the command
-    desc: "Save a view-once image, video, or voice message",  // Description
-    category: "utility",  // Command category
-    filename: __filename,  // Filename for logging
+    pattern: "vv",
+    alias: ["viewonce", "savevo"],
+    desc: "Download View Once media (image, video, audio)",
+    category: "media",
+    filename: __filename,
   },
-  async (robin, mek, m, { from, quoted, reply }) => {
+  async (robin, m, msg, { from, quoted, reply }) => {
     try {
-      // Ensure that a message is quoted and it's a view-once message
-      if (!quoted || !quoted.message || !quoted.message.viewOnceMessage) {
+      if (
+        !quoted ||
+        !quoted.message ||
+        !quoted.message.viewOnceMessage ||
+        typeof quoted.message.viewOnceMessage !== "object"
+      ) {
         return reply("❌ Please reply to a *view-once photo, video or voice* message.");
       }
 
-      const message = quoted.message.viewOnceMessage.message;
-      const type = Object.keys(message)[0];  // Get the type of the media (image, video, etc.)
+      // Get the actual media message inside viewOnce
+      const viewOnceMsg = quoted.message.viewOnceMessage.message;
+      const mediaType = Object.keys(viewOnceMsg)[0]; // e.g., 'imageMessage'
 
-      // If it's an image, video, or voice message, download it
-      if (type === "imageMessage" || type === "videoMessage" || type === "audioMessage") {
-        const buffer = await downloadMediaMessage({ message: quoted.message.viewOnceMessage }, "viewOnce");
-
-        // Handle if download fails
-        if (!buffer) return reply("⚠️ Failed to download media. Please try again.");
-
-        // Send the saved media back to the user
-        await robin.sendMessage(
-          from,
-          {
-            [type === "imageMessage" ? "image" : type === "videoMessage" ? "video" : "audio"]: buffer,
-            caption: "📥 Here is your saved view-once media!",
-          },
-          { quoted: mek }
-        );
-      } else {
-        return reply("⚠️ Only *view-once images, videos, or voice messages* are supported.");
+      if (!["imageMessage", "videoMessage", "audioMessage"].includes(mediaType)) {
+        return reply("⚠️ Unsupported media type. Only image, video, or voice is allowed.");
       }
-    } catch (err) {
-      console.error("Error in .vv command:", err);
-      reply("❌ Something went wrong. Please try again later.");
+
+      const buffer = await downloadMediaMessage(
+        { message: quoted.message.viewOnceMessage },
+        "buffer",
+        {},
+        {
+          logger: undefined,
+          reuploadRequest: async () => {},
+        }
+      );
+
+      if (!buffer) return reply("⚠️ Failed to download media.");
+
+      await robin.sendMessage(
+        from,
+        {
+          [mediaType === "imageMessage"
+            ? "image"
+            : mediaType === "videoMessage"
+            ? "video"
+            : "audio"]: buffer,
+          caption: "✅ View-once media saved.",
+        },
+        { quoted: m }
+      );
+    } catch (e) {
+      console.error("View Once Error:", e);
+      reply("❌ Error saving media.");
     }
   }
 );
