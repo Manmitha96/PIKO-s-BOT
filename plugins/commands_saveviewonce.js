@@ -3,9 +3,9 @@ const { downloadMediaMessage } = require("../lib/msg.js"); // Adjust the path as
 
 cmd(
   {
-    pattern: "saveviewonce",
+    pattern: "vv",
     alias: ["savevo", "vo2img"],
-    react: "👁️",
+    react: "👁‍🗨",
     desc: "Convert a View Once image/video to a normal message",
     category: "utility",
     filename: __filename,
@@ -30,7 +30,7 @@ cmd(
         )
       ) {
         return reply(
-          "Please reply to a View Once image or video message to save it as normal."
+          "*Please reply to a View Once image or video message to save it as normal.* 🧧"
         );
       }
 
@@ -42,13 +42,13 @@ cmd(
       if (quoted.imageMessage) {
         await robin.sendMessage(
           from,
-          { image: media, caption: "Here is your saved image." },
+          { image: media, caption: "Here is your saved image.💜" },
           { quoted: mek }
         );
       } else if (quoted.videoMessage) {
         await robin.sendMessage(
           from,
-          { video: media, caption: "Here is your saved video." },
+          { video: media, caption: "Here is your saved video.💜" },
           { quoted: mek }
         );
       }
