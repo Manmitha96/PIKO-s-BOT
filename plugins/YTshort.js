@@ -12,13 +12,13 @@ cmd(
   async (robin, mek, m, { from, q, reply }) => {
     try {
       if (!q || !q.includes("youtube.com/shorts"))
-        return reply("*Please provide a valid YouTube Shorts link.*\nExample: `.ytshort https://youtube.com/shorts/abc123`");
+        return reply("*Please provide a valid YouTube Shorts link.* 📮\n\n👁️‍🗨️Example:- `.ytshort https://youtube.com/shorts/abc123`");
 
       // Format download request
       const apiUrl = `https://p.oceansaver.in/ajax/download.php?format=720&url=${encodeURIComponent(q)}&api=dfcb6d76f2f6a9894gjkege8a4ab232222`;
 
       const response = await axios.get(apiUrl);
-      if (!response.data.success) throw new Error("Could not fetch video.");
+      if (!response.data.success) throw new Error("*Could not fetch video.* ❌");
 
       const { id, title } = response.data;
       const progressUrl = `https://p.oceansaver.in/ajax/progress.php?id=${id}`;
@@ -40,7 +40,7 @@ cmd(
             },
             { quoted: mek }
           );
-          return reply("*Short successfully downloaded!* 💜");
+          return reply("*Short Successfully Downloaded!* 🔝💜");
         }
         retries++;
         await new Promise((res) => setTimeout(res, 5000));
