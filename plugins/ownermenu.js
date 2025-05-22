@@ -32,8 +32,8 @@ cmd(
 2. ▪️.update
 3. ▪️.left
 4. ▪️.block
-5. ▪️.Coming soon
-6. ▪️.Coming soon
+5. ▪️.vv (For one view to normal)
+6. ▪️.dp (For download anyone dp)
 
 *_Reply with a command to use that category._*
 
