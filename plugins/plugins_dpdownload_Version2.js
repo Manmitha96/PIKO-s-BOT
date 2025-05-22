@@ -18,20 +18,20 @@ cmd(
         // If replying to a message, get sender's JID
         target = quoted.sender;
       } else {
-        return reply("Please provide a WhatsApp number or reply to a user's message with this command.");
+        return reply("Please provide a WhatsApp number or reply to a user's message with this command💙.");
       }
 
       let url = await robin.profilePictureUrl(target, "image").catch(() => null);
-      if (!url) return reply("Couldn't fetch profile picture (maybe the user has no dp or privacy is set).");
+      if (!url) return reply("*Couldn't fetch profile picture (maybe the user has no dp or privacy is set).* 📬");
 
       await robin.sendMessage(
         from,
-        { image: { url }, caption: `Profile picture of ${target.split("@")[0]}` },
+        { image: { url }, caption: `☮️ *Profile Picture Of* ${target.split("@")[0]}` },
         { quoted: mek }
       );
     } catch (e) {
       console.error(e);
-      reply("Error fetching display picture. Make sure the number is correct or reply to a user's message.");
+      reply("Error fetching display picture. Make sure the number is correct or reply to a user's message.🆔");
     }
   }
 );
