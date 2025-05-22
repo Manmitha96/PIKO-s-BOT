@@ -34,7 +34,8 @@ cmd(
 4. ▪️..add <+94 xxxxxxxxx>
 5. ▪️.left
 6. ▪️.demote
-6. ▪️.promote
+7. ▪️.promote
+8. ▪️.vv (For one view to normal)
 
 *_Reply with a command to use that category._*
 
