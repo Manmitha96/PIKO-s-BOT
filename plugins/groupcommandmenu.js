@@ -36,6 +36,7 @@ cmd(
 6. ▪️.demote
 7. ▪️.promote
 8. ▪️.vv (For one view to normal)
+9. ▪️.dp (For download anyone dp)
 
 *_Reply with a command to use that category._*
 
