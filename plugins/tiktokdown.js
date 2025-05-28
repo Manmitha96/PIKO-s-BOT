@@ -1,15 +1,15 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const tikly = require("node-tiklydown").default; // ✅ FIXED
+const { tiktokdl } = require("@xct007/tiktok-scraper"); // ✅ correct function
 
-// Expand short TikTok links
+// Expand short TikTok links (like https://vt.tiktok.com/...)
 async function expandShortUrl(url) {
   try {
     const response = await axios.get(url, { maxRedirects: 5 });
     return response.request.res.responseUrl || url;
   } catch (err) {
     console.error("URL expansion failed:", err.message);
-    return url;
+    return url; // fallback if expansion fails
   }
 }
 
@@ -29,56 +29,28 @@ cmd(
       const finalUrl = await expandShortUrl(q);
       console.log("Expanded TikTok URL:", finalUrl);
 
-      const result = await tikly.video(finalUrl); // ✅ FIXED
+      const result = await tiktokdl(finalUrl);
 
-      if (!result) {
-        return reply("❌ *Failed to fetch video. The content may be private or invalid.*");
+      if (!result || !result.video || !result.video.no_watermark) {
+        return reply("❌ *Video not found or the link is invalid.*");
       }
 
-      const title = result.description || "TikTok content";
+      const videoUrl = result.video.no_watermark;
+      const caption = `🎥 *${result.description || "TikTok video"}*\n👤 Author: ${result.author?.nickname || "Unknown"}`;
 
-      if (result.videoUrl) {
-        try {
-          const videoBuffer = await axios.get(result.videoUrl, { responseType: "arraybuffer" });
+      const videoBuffer = await axios.get(videoUrl, { responseType: "arraybuffer" });
 
-          await robin.sendMessage(
-            from,
-            {
-              video: videoBuffer.data,
-              mimetype: "video/mp4",
-              caption: `🎥 *${title}*\n👤 Author: ${result.author || "Unknown"}\n📥 From TikTok`,
-            },
-            { quoted: mek }
-          );
+      await robin.sendMessage(
+        from,
+        {
+          video: videoBuffer.data,
+          mimetype: "video/mp4",
+          caption,
+        },
+        { quoted: mek }
+      );
 
-          return reply("✅ *Video sent!*");
-        } catch (videoErr) {
-          console.error("Video download error:", videoErr.message);
-          return reply("❌ *Failed to download video.*");
-        }
-      }
-
-      if (result.images && result.images.length > 0) {
-        for (let i = 0; i < result.images.length; i++) {
-          try {
-            const imgBuffer = await axios.get(result.images[i], { responseType: "arraybuffer" });
-            await robin.sendMessage(
-              from,
-              {
-                image: imgBuffer.data,
-                caption: `🖼️ Slide ${i + 1} of ${result.images.length}\n🎬 *${title}*`,
-              },
-              { quoted: mek }
-            );
-          } catch (imgErr) {
-            console.error(`Image ${i + 1} download error:`, imgErr.message);
-          }
-        }
-
-        return reply(`✅ *Slideshow with ${result.images.length} slides sent!*`);
-      }
-
-      return reply("❌ *No downloadable content found in the TikTok link.*");
+      return reply("✅ *Video sent!*");
 
     } catch (err) {
       console.error("TikTok command error:", err);
