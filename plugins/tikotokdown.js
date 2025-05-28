@@ -1,12 +1,12 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const fetch = require("node-fetch");
 const { v1 } = require("node-tiklydown");
 
-// Utility to expand TikTok short links
+// Utility to expand TikTok short links using axios
 async function expandShortUrl(url) {
-  const response = await fetch(url, { redirect: "follow" });
-  return response.url;
+  const response = await axios.get(url, { maxRedirects: 5 });
+  // axios follows redirects, and the final URL is in response.request.res.responseUrl
+  return response.request.res.responseUrl;
 }
 
 cmd(
