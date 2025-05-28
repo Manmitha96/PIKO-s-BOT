@@ -1,6 +1,6 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const { tiktokdl } = require("@xct007/tiktok-scraper"); // ✅ correct function
+const tiktok = require("@xct007/tiktok-scraper"); // ✅ correct import
 
 // Expand short TikTok links (like https://vt.tiktok.com/...)
 async function expandShortUrl(url) {
@@ -9,7 +9,7 @@ async function expandShortUrl(url) {
     return response.request.res.responseUrl || url;
   } catch (err) {
     console.error("URL expansion failed:", err.message);
-    return url; // fallback if expansion fails
+    return url;
   }
 }
 
@@ -29,7 +29,7 @@ cmd(
       const finalUrl = await expandShortUrl(q);
       console.log("Expanded TikTok URL:", finalUrl);
 
-      const result = await tiktokdl(finalUrl);
+      const result = await tiktok.tiktokdl(finalUrl); // ✅ correct function
 
       if (!result || !result.video || !result.video.no_watermark) {
         return reply("❌ *Video not found or the link is invalid.*");
