@@ -43,7 +43,7 @@ cmd(
       if (!q) return reply("*Please provide a valid TikTok video URL!* ❌");
 
       // Check if the link looks like TikTok
-      const tiktokRegex = /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/(@[\w.-]+\/video\/\d+|\w+\/video\/\d+|\d+)/;
+      const tiktokRegex = /(?:https?:\/\/)?(?:www\.)?(?:vm\.tiktok\.com|vt\.tiktok\.com|tiktok\.com)\/[^\s]+/;
       if (!tiktokRegex.test(q)) {
         return reply("*Invalid TikTok URL! Please try again.* ❌");
       }
