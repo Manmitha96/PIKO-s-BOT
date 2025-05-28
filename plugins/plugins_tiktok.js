@@ -1,5 +1,5 @@
 const { cmd } = require("../command");
-const axios = require("axios");
+const axios = require("node-tiklydown");
 
 cmd(
   {
