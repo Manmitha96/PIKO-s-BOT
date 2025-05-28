@@ -1,15 +1,15 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const { video } = require("node-tiklydown"); // ✅ Use destructuring to get the function
+const tikly = require("node-tiklydown").default; // ✅ FIXED
 
-// Expand short TikTok links (like https://vt.tiktok.com/...)
+// Expand short TikTok links
 async function expandShortUrl(url) {
   try {
     const response = await axios.get(url, { maxRedirects: 5 });
     return response.request.res.responseUrl || url;
   } catch (err) {
     console.error("URL expansion failed:", err.message);
-    return url; // fallback if expansion fails
+    return url;
   }
 }
 
@@ -29,7 +29,7 @@ cmd(
       const finalUrl = await expandShortUrl(q);
       console.log("Expanded TikTok URL:", finalUrl);
 
-      const result = await video(finalUrl); // ✅ Correct usage
+      const result = await tikly.video(finalUrl); // ✅ FIXED
 
       if (!result) {
         return reply("❌ *Failed to fetch video. The content may be private or invalid.*");
@@ -37,7 +37,6 @@ cmd(
 
       const title = result.description || "TikTok content";
 
-      // Handle video
       if (result.videoUrl) {
         try {
           const videoBuffer = await axios.get(result.videoUrl, { responseType: "arraybuffer" });
@@ -59,7 +58,6 @@ cmd(
         }
       }
 
-      // Handle slideshow (images)
       if (result.images && result.images.length > 0) {
         for (let i = 0; i < result.images.length; i++) {
           try {
