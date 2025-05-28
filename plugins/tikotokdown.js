@@ -1,6 +1,6 @@
 const { cmd } = require("../command");
 const axios = require("axios");
-const tikly = require("node-tiklydown"); // ✅ No constructor
+const { video } = require("node-tiklydown"); // ✅ Use destructuring to get the function
 
 // Expand short TikTok links (like https://vt.tiktok.com/...)
 async function expandShortUrl(url) {
@@ -29,7 +29,7 @@ cmd(
       const finalUrl = await expandShortUrl(q);
       console.log("Expanded TikTok URL:", finalUrl);
 
-      const result = await tikly.video(finalUrl);
+      const result = await video(finalUrl); // ✅ Correct usage
 
       if (!result) {
         return reply("❌ *Failed to fetch video. The content may be private or invalid.*");
@@ -80,7 +80,6 @@ cmd(
         return reply(`✅ *Slideshow with ${result.images.length} slides sent!*`);
       }
 
-      // If neither video nor images exist
       return reply("❌ *No downloadable content found in the TikTok link.*");
 
     } catch (err) {
