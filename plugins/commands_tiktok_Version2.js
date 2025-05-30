@@ -4,7 +4,7 @@ const axios = require("axios");
 cmd(
   {
     pattern: "tiktok",
-    react: "🎵",
+    react: "🎥",
     desc: "Download TikTok Video or Slideshow",
     category: "download",
     filename: __filename,
@@ -16,7 +16,7 @@ cmd(
     { from, quoted, q, reply }
   ) => {
     try {
-      if (!q) return reply("*Provide a TikTok video link or ID.* 🎵💜");
+      if (!q) return reply("*Provide a TikTok video link or ID.* 💜");
 
       // TikWM API endpoint
       const apiUrl = `https://tikwm.com/api/?url=${encodeURIComponent(q)}`;
@@ -32,10 +32,11 @@ cmd(
       const author = d.author?.nickname || d.author?.unique_id || "";
       const thumbnail = d.cover || d.origin_cover || "";
 
-      let desc = `🎵 *PIKO TIKTOK DOWNLOADER* 🎵
+      let desc = `💜 *PIKO TIKTOK DOWNLOADER* 💜
 
 👤 *Author*: ${author}
 📝 *Title*: ${title}
+
 🔗 *Video Link*: ${q}
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️
@@ -61,7 +62,7 @@ cmd(
             {
               image: { url: d.images[i] },
               caption: i === 0
-                ? `🖼️ *TikTok Slideshow*\n${d.images.length} photos\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`
+                ? `📮 *TikTok Slideshow*\n${d.images.length} photos\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`
                 : undefined,
             },
             { quoted: mek }
@@ -80,7 +81,7 @@ cmd(
           );
         }
 
-        return reply("*Sent TikTok slideshow images!* 🎵🖼️");
+        return reply("*Sent TikTok Slideshow Images!* 🧧");
       }
 
       // --- Video (normal) support ---
@@ -97,11 +98,11 @@ cmd(
         from,
         {
           video: videoBuffer.data,
-          caption: `🎵 *${title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`,
+          caption: `☮️ *${title}*\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`,
         },
         { quoted: mek }
       );
-      reply("*Thanks for using my bot!* 🎵💙");
+      reply("*Thanks for using my bot!* 💙");
     } catch (e) {
       console.error(e);
       reply(`❌ Error: ${e.message}`);
