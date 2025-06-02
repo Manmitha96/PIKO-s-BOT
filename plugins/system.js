@@ -15,7 +15,7 @@ try{
 
     let status = `
 ───────────────────
-_*⚙️ Cudu Nona's Sys Info ⚙️*_
+_*⚙️ Piko's Sys Info ⚙️*_
 ───────────────────
 
 ┌────────────────
@@ -25,7 +25,7 @@ _*⚙️ Cudu Nona's Sys Info ⚙️*_
 │❖ *ᴏᴡɴᴇʀ :* _Asᴍᴏᴅᴇᴜs Eᴘᴢɪ_
 └────────────────
 
-> ᴄʀᴇᴀᴛᴇᴅ ʙʏ Asᴍᴏᴅᴇᴜs Eᴘᴢɪ    
+> ᴄʀᴇᴀᴛᴇᴅ ʙʏ PIKO BLAZE    
 `
 
     return reply(`${status}`)
@@ -54,7 +54,7 @@ try{
         const message = await conn.sendMessage(from, { text: '*pong...*' })
         const endTime = Date.now()
         const ping = endTime - startTime
-        await conn.sendMessage(from, { text: `_*📍Epzi's Speed : ${ping}ms*_` }, { quoted: mek })
+        await conn.sendMessage(from, { text: `_*📍Piko's Speed : ${ping}ms*_` }, { quoted: mek })
     } catch (e) {
         console.log(e)
         reply(`${e}`)
