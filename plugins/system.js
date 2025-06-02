@@ -7,7 +7,7 @@ cmd({
     pattern: "system",
     desc: "Check bot online or no.",
     category: "main",
-    react: "📟",
+    react: "🚀",
     filename: __filename
 },
 async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
@@ -22,7 +22,7 @@ _*⚙️ Piko's Sys Info ⚙️*_
 │❖ *ᴜᴘᴛɪᴍᴇ :* _${runtime(process.uptime())}_
 │❖ *ʀᴀᴍ ᴜꜱᴀɢᴇ :*  _${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB_
 │❖ *ʜᴏꜱᴛ ɴᴀᴍᴇ :* _${os.hostname()}_
-│❖ *ᴏᴡɴᴇʀ :* _Asᴍᴏᴅᴇᴜs Eᴘᴢɪ_
+│❖ *ᴏᴡɴᴇʀ :* _PIKO BLAZe_
 └────────────────
 
 > ᴄʀᴇᴀᴛᴇᴅ ʙʏ PIKO BLAZE    
@@ -51,7 +51,7 @@ cmd({
 async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
 try{
     const startTime = Date.now()
-        const message = await conn.sendMessage(from, { text: '*pong...*' })
+        const message = await conn.sendMessage(from, { text: '*ping...*' })
         const endTime = Date.now()
         const ping = endTime - startTime
         await conn.sendMessage(from, { text: `_*📍Piko's Speed : ${ping}ms*_` }, { quoted: mek })
