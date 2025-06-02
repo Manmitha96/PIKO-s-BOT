@@ -22,7 +22,7 @@ _*⚙️ Piko's Sys Info ⚙️*_
 │❖ *ᴜᴘᴛɪᴍᴇ :* _${runtime(process.uptime())}_
 │❖ *ʀᴀᴍ ᴜꜱᴀɢᴇ :*  _${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB_
 │❖ *ʜᴏꜱᴛ ɴᴀᴍᴇ :* _${os.hostname()}_
-│❖ *ᴏᴡɴᴇʀ :* _PIKO BLAZe_
+│❖ *ᴏᴡɴᴇʀ :* _PIKO BLAZE_
 └────────────────
 
 > ᴄʀᴇᴀᴛᴇᴅ ʙʏ PIKO BLAZE    
@@ -37,28 +37,3 @@ _*⚙️ Piko's Sys Info ⚙️*_
     reply(`${e}`)
     }
     })
-
-
-//__________ping______
-
-cmd({
-    pattern: "ping",
-    desc: "Check bot online or no.",
-    category: "main",
-    react: "🚀",
-    filename: __filename
-},
-async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
-try{
-    const startTime = Date.now()
-        const message = await conn.sendMessage(from, { text: '*ping...*' })
-        const endTime = Date.now()
-        const ping = endTime - startTime
-        await conn.sendMessage(from, { text: `_*📍Piko's Speed : ${ping}ms*_` }, { quoted: mek })
-    } catch (e) {
-        console.log(e)
-        reply(`${e}`)
-    }
-})
-
-
