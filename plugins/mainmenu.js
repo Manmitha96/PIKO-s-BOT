@@ -33,7 +33,8 @@ cmd(
 3. ▪️.ai <text>
 4. ▪️.gemini <text>
 5. ▪️.system
-6. ▪️.Coming soon
+6. ▪️.ping
+7. ▪️.Coming soon
 
 *_Reply with a command to use that category._*
 
