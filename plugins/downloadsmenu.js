@@ -33,7 +33,8 @@ cmd(
 3. ▪️.fb <link>
 4. ▪️.movie <text>
 5. ▪️.ytshort <link>
-6. ▪️.Coming soon
+6. ▪️.tiktok <link>
+7. ▪️.Coming soon
 
 *_Reply with a command to download that category._*
 
