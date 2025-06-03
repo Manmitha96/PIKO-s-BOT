@@ -7,7 +7,7 @@ cmd({
     pattern: "system",
     desc: "Check bot online or no.",
     category: "main",
-    react: "🚀",
+    react: "⚔️",
     filename: __filename
 },
 async(conn, mek, m,{from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply}) => {
@@ -15,13 +15,15 @@ try{
 
     let status = `
 ───────────────────
-_*⚙️ Piko's Sys Info ⚙️*_
+_*⚙️ PIKO's Sys Info ⚙️*_
 ───────────────────
 
 ┌────────────────
 │❖ *ᴜᴘᴛɪᴍᴇ :* _${runtime(process.uptime())}_
 │❖ *ʀᴀᴍ ᴜꜱᴀɢᴇ :*  _${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)}MB / ${Math.round(require('os').totalmem / 1024 / 1024)}MB_
 │❖ *ʜᴏꜱᴛ ɴᴀᴍᴇ :* _${os.hostname()}_
+│❖ *ᴘʟᴀᴛꜰᴏʀᴍ :* _${os.platform()}_
+│❖ *ᴄᴘᴜ :* _${os.cpus()[0].model}_
 │❖ *ᴏᴡɴᴇʀ :* _PIKO BLAZE_
 └────────────────
 
