@@ -33,7 +33,7 @@ cmd(
 3. ▪️.left
 4. ▪️.block
 5. ▪️.vv (For one view to normal)
-6. ▪️.dp (For download anyone dp)
+6. ▪️.dp (Download anyone dp)
 
 *_Reply with a command to use that category._*
 
