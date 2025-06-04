@@ -57,7 +57,7 @@ cmd(
         '*📡 Transmitting data...* 📨',
         '_🕵️‍♂️ Ensuring stealth..._ 🤫',
         '*🔧 Finalizing operations...* 🏁',
-        '> *ANONYMOUS_PIKO-HACKING-COMPLETE ☣*',
+        '> *ANONYMOUS_PIKOV2-HACKING-COMPLETE ☣*',
       ];
 
       for (const message of hackMessages) {
