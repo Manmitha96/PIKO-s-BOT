@@ -1,82 +1,81 @@
-const { cmd } = require('../command')
+const { cmd } = require('../command');
+
 cmd(
   {
     pattern: 'hack',
     desc: "Displays a dynamic and playful 'Hacking' message for fun.",
     category: 'fun',
-    react: '\uD83D\uDCBB',
+    react: '💻',
     filename: __filename,
   },
   async (
-    _0x119791,
-    _0x5b5f5a,
-    _0x17d000,
+    client,
+    m,
+    sock,
     {
-      from: _0x17df4c,
-      quoted: _0x261a37,
-      body: _0x2e25b2,
-      isCmd: _0x1b8ba5,
-      command: _0x51976c,
-      args: _0xb58a1f,
-      q: _0x5e8c2d,
-      isGroup: _0x2a7f90,
-      sender: _0x2dd9c4,
-      senderNumber: _0x4b8e81,
-      botNumber2: _0x49a9d3,
-      botNumber: _0x450892,
-      pushname: _0x1a8b72,
-      isMe: _0x514ba7,
-      isOwner: _0x21ee35,
-      groupMetadata: _0x14c6e4,
-      groupName: _0x205b87,
-      participants: _0x461ffe,
-      groupAdmins: _0x550fdb,
-      isBotAdmins: _0x528281,
-      isAdmins: _0x4dc5e2,
-      reply: _0x397f72,
+      from,
+      quoted,
+      body,
+      isCmd,
+      command,
+      args,
+      q,
+      isGroup,
+      sender,
+      senderNumber,
+      botNumber2,
+      botNumber,
+      pushname,
+      isMe,
+      isOwner,
+      groupMetadata,
+      groupName,
+      participants,
+      groupAdmins,
+      isBotAdmins,
+      isAdmins,
+      reply,
     }
   ) => {
     try {
-      const _0x1be32a = [
-        '\uD83D\uDCBB *HACK STARTING...* \uD83D\uDCBB',
+      const hackMessages = [
+        '💻 *HACK STARTING...* 💻',
         '',
-        '*Initializing hacking tools...* \uD83D\uDEE0️',
-        '*Connecting to remote servers...* \uD83C\uDF10',
+        '*Initializing hacking tools...* 🛠️',
+        '*Connecting to remote servers...* 🌐',
         '',
-        '```[\u2588\u2588] 10%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588] 20%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588] 30%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 40%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 50%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 60%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 70%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 80%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 90%``` \u23F3',
-        '```[\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588] 100%``` \u2705',
+        '```[██] 10%``` ⏳',
+        '```[████] 20%``` ⏳',
+        '```[██████] 30%``` ⏳',
+        '```[████████] 40%``` ⏳',
+        '```[██████████] 50%``` ⏳',
+        '```[████████████] 60%``` ⏳',
+        '```[██████████████] 70%``` ⏳',
+        '```[████████████████] 80%``` ⏳',
+        '```[██████████████████] 90%``` ⏳',
+        '```[████████████████████] 100%``` ✅',
         '',
-        '\uD83D\uDD12 *System Breach: Successful!* \uD83D\uDD13',
-        '\uD83D\uDE80 *Command Execution: Complete!* \uD83C\uDFAF',
+        '🔒 *System Breach: Successful!* 🔓',
+        '🚀 *Command Execution: Complete!* 🎯',
         '',
-        '*\uD83D\uDCE1 Transmitting data...* \uD83D\uDCE4',
-        '_\uD83D\uDD75️‍\u2642️ Ensuring stealth..._ \uD83E\uDD2B',
-        '*\uD83D\uDD27 Finalizing operations...* \uD83C\uDFC1',
+        '*📡 Transmitting data...* 📨',
+        '_🕵️‍♂️ Ensuring stealth..._ 🤫',
+        '*🔧 Finalizing operations...* 🏁',
         '',
-        '\u26A0️ *Note:* All actions are for demonstration purposes only.',
-        '\u26A0️ *Reminder:* Ethical hacking is the only way to ensure security.',
+        '⚠️ *Note:* All actions are for demonstration purposes only.',
+        '⚠️ *Reminder:* Ethical hacking is the only way to ensure security.',
         '',
-        '> *ANONYMOUS_PIKO-HACKING-COMPLETE \u2623*',
-      ]
-      for (const _0x3566fa of _0x1be32a) {
-        await _0x119791.sendMessage(
-          _0x17df4c,
-          { text: _0x3566fa },
-          { quoted: _0x5b5f5a }
-        )
-        await new Promise((_0x2db55e) => setTimeout(_0x2db55e, 1000))
+        '> *ANONYMOUS_PIKO-HACKING-COMPLETE ☣*',
+      ];
+
+      for (const message of hackMessages) {
+        await client.sendMessage(from, { text: message }, { quoted: m });
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay
       }
-    } catch (_0x4e5d9d) {
-      console.log(_0x4e5d9d)
-      _0x397f72('\u274C *Error:* ' + _0x4e5d9d.message)
+
+    } catch (err) {
+      console.error(err);
+      reply('❌ *Error:* ' + err.message);
     }
   }
-)
+);
