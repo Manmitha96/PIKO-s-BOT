@@ -70,7 +70,7 @@ cmd(
 
       for (const message of hackMessages) {
         await client.sendMessage(from, { text: message }, { quoted: m });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 1-second delay
+        await new Promise(resolve => setTimeout(resolve, 2500)); // 1-second delay
       }
 
     } catch (err) {
