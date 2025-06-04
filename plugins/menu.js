@@ -38,7 +38,7 @@ cmd(
 
 *_Reply with a number e.g.( .1 ) to view the commands in that category._*
 
-☯️ Made by P_I_K_O`;
+☯️ *Made by P_I_K_O*`;
 
       await robin.sendMessage(
         from,
