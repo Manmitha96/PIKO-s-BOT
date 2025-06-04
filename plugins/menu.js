@@ -35,6 +35,7 @@ cmd(
 4. 👑 Owner Commands
 5. 🪄 Convert Commands
 6. 🔎 Search Commands
+7. 🧚🏻 Anime Commands
 
 *_Reply with a number e.g.( .1 ) to view the commands in that category._*
 
