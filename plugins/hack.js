@@ -40,7 +40,6 @@ cmd(
     try {
       const hackMessages = [
         '💻 *HACK STARTING...* 💻',
-        '',
         '*Initializing hacking tools...* 🛠️',
         '*Connecting to remote servers...* 🌐',
         '',
@@ -57,7 +56,6 @@ cmd(
         '',
         '🔒 *System Breach: Successful!* 🔓',
         '🚀 *Command Execution: Complete!* 🎯',
-        '',
         '*📡 Transmitting data...* 📨',
         '_🕵️‍♂️ Ensuring stealth..._ 🤫',
         '*🔧 Finalizing operations...* 🏁',
