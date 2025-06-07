@@ -32,7 +32,7 @@ cmd(
 2. ▪️.fact
 3. ▪️.joke
 4. ▪️.hack
-5. ▪️.Coming soon
+5. ▪️.dog
 6. ▪️.Coming soon
 7. ▪️.Coming soon
 
