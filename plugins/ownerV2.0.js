@@ -1,5 +1,5 @@
 const { cmd } = require('../command');
-const { exec } = require('child_process-ext');
+const { exec } = require('child_process');
 const fs = require("fs");
 
 // 4. Block User
