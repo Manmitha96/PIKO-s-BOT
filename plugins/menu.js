@@ -36,6 +36,7 @@ cmd(
 5. 🪄 Convert Commands
 6. 🔎 Search Commands
 7. 🧚🏻 Anime Commands
+8. 💫 Fun Commands
 
 *_Reply with a number e.g.( .1 ) to view the commands in that category._*
 
