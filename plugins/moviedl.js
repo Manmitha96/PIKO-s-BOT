@@ -1,5 +1,4 @@
 const { cmd } = require("../command");
-const { fetchJson } = require('../lib/functions');
 const { getMovies } = require("dark-yasiya-sinhalasub.lk");
 const axios = require("axios");
 
@@ -23,9 +22,9 @@ cmd(
       const premium = await getPremiumUsers();
       if (!premium.includes(sender)) return reply("💎 *Premium feature!* Contact 0743381623");
 
-      const env = await readEnv();
-      const results = await getMovies(q);
+      const PREFIX = "."; // Replace with your actual command prefix
 
+      const results = await getMovies(q);
       if (!results.result.length) return reply("❌ *No movies found.*");
 
       const buttons = [
@@ -39,7 +38,7 @@ cmd(
                 highlight_label: "Click to Download",
                 rows: results.result.map((v) => ({
                   title: v.title,
-                  id: env.PREFIX + "mds " + v.link,
+                  id: PREFIX + "mds " + v.link,
                 })),
               },
             ],
