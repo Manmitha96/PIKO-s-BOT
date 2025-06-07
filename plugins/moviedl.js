@@ -1,5 +1,5 @@
 const { cmd } = require("../command");
-const { readEnv } = require("../lib/database");
+const { fetchJson } = require('../lib/functions');
 const { getMovies } = require("dark-yasiya-sinhalasub.lk");
 const axios = require("axios");
 
