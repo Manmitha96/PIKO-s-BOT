@@ -8,7 +8,7 @@ const { fetchJson } = require('../lib/functions');
 
 // 🧠 Function to fetch premium users
 async function getPremiumUsers() {
-  const usersData = await fetchJson('https://raw.githubusercontent.com/HaCkr-EPZI-public/ASITHA-MD-DATABASE/refs/heads/main/Moviedl/primiyam.json');
+  const usersData = await fetchJson('https://github.com/Manmitha96/PIKO-s-BOT/blob/main/premium.json');
   const premiumUsers = usersData.split(',');
   return premiumUsers.map(user => user.replace(/[^0-9]/g, '') + '@s.whatsapp.net');
 }
