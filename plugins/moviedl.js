@@ -1,368 +1,134 @@
-const initializeOnce = (function () {
-    let isInitialized = true;
-    return function (context, func) {
-        const innerFunc = isInitialized
-            ? function () {
-                if (func) {
-                    const result = func.apply(context, arguments);
-                    func = null;
-                    return result;
-                }
-            }
-            : function () {};
-        isInitialized = false;
-        return innerFunc;
-    };
-})();
-
-const checkSelfInvocation = initializeOnce(this, function () {
-    return checkSelfInvocation
-        .toString()
-        .search('(((.+)+)+)+$')
-        .toString()
-        .constructor(checkSelfInvocation)
-        .search('(((.+)+)+)+$');
-});
-checkSelfInvocation();
-
-const conditionalInvoke = (function () {
-    let isFirstRun = true;
-    return function (context, func) {
-        const executeOnce = isFirstRun
-            ? function () {
-                if (func) {
-                    const result = func.apply(context, arguments);
-                    func = null;
-                    return result;
-                }
-            }
-            : function () {};
-        isFirstRun = false;
-        return executeOnce;
-    };
-})();
-
-(function () {
-    conditionalInvoke(this, function () {
-        const regexFunction = new RegExp('function *\\( *\\)');
-        const regexIncrement = new RegExp('\\+\\+ *(?:[a-zA-Z_$][0-9a-zA-Z_$]*)', 'i');
-        const output = executeChain('init');
-        if (!regexFunction.test(output + 'chain') || !regexIncrement.test(output + 'input')) {
-            executeChain('0');
-        } else {
-            executeChain();
-        }
-    })();
-})();
-
-const runOnce = (function () {
-    let isExecuted = true;
-    return function (context, func) {
-        const execute = isExecuted
-            ? function () {
-                if (func) {
-                    const result = func.apply(context, arguments);
-                    func = null;
-                    return result;
-                }
-            }
-            : function () {};
-        isExecuted = false;
-        return execute;
-    };
-})();
-
-const hookConsole = runOnce(this, function () {
-    const getGlobalContext = function () {
-        let globalContext;
-        try {
-            globalContext = Function('return (function() {}.constructor("return this")( ));')();
-        } catch (error) {
-            globalContext = window;
-        }
-        return globalContext;
-    };
-
-    const globalContext = getGlobalContext();
-    const consoleRef = (globalContext.console = globalContext.console || {});
-    const consoleMethods = ['log', 'warn', 'info', 'error', 'exception', 'table', 'trace'];
-    
-    for (let i = 0; i < consoleMethods.length; i++) {
-        const bindFunc = runOnce.constructor.prototype.bind(runOnce);
-        const method = consoleMethods[i];
-        const originalMethod = consoleRef[method] || bindFunc;
-        bindFunc['__proto__'] = runOnce.bind(runOnce);
-        bindFunc.toString = originalMethod.toString.bind(originalMethod);
-        consoleRef[method] = bindFunc;
-    }
-});
-hookConsole();
-
 const { SinhalaSub } = require('@sl-code-lords/movie-api');
 const { readEnv } = require('../lib/database');
 const { cmd } = require('../command');
-const os = require('os');
-const {
-    getBuffer,
-    getGroupAdmins,
-    getRandom,
-    h2k,
-    isUrl,
-    Json,
-    runtime,
-    sleep,
-    Func,
-    fetchJson,
-} = require('../lib/functions');
 const axios = require('axios');
 const { PixaldrainDL } = require('pixaldrain-sinhalasub');
-const {
-    getMovies,
-    getMovieDL,
-    getMoviesSearch,
-} = require('dark-yasiya-sinhalasub.lk');
+const { getMovies, getMovieDL } = require('dark-yasiya-sinhalasub.lk');
+const { fetchJson } = require('../lib/functions');
 
+// 🧠 Function to fetch premium users
 async function getPremiumUsers() {
-    const usersData = await fetchJson('https://raw.githubusercontent.com/HaCkr-EPZI-public/ASITHA-MD-DATABASE/refs/heads/main/Moviedl/primiyam.json');
-    const premiumUsers = usersData.split(',');
-    return premiumUsers.map((user) => user.replace(/[^0-9]/g, '') + '@s.whatsapp.net');
+  const usersData = await fetchJson('https://raw.githubusercontent.com/HaCkr-EPZI-public/ASITHA-MD-DATABASE/refs/heads/main/Moviedl/primiyam.json');
+  const premiumUsers = usersData.split(',');
+  return premiumUsers.map(user => user.replace(/[^0-9]/g, '') + '@s.whatsapp.net');
 }
 
-const movieCommand = {};
-movieCommand.pattern = 'moviedown';
-movieCommand.alias = ['ms'];
-movieCommand.desc = 'Check bot setting.';
-movieCommand.react = '🎬';
-movieCommand.category = 'extra';
-movieCommand.filename = __filename;
-
-cmd(
-    movieCommand,
-    async (
-        bot, message, chat,
-        {
-            from, quoted, body, isCmd, command, args, q,
-            isGroup, sender, senderNumber, botNumber2, botNumber, pushname,
-            isMe, isOwner, groupMetadata, groupName, participants, groupAdmins,
-            isBotAdmins, isAdmins, reply,
-        }
-    ) => {
-        try {
-            const premiumUsers = await getPremiumUsers();
-            const isPremium = premiumUsers.includes(sender);
-
-            if (!isPremium) {
-                return reply('🚩 This command is only available to premium users, buy premium 0743381623');
-            }
-
-            const env = await readEnv();
-            const movieSearchResults = await getMovies(q);
-            if (movieSearchResults.result.length === 0) {
-                return reply('🚫 No movies found for your search query.');
-            }
-
-            const buttonOptions = [
-                {
-                    name: 'single_select',
-                    buttonParamsJson: JSON.stringify({
-                        title: 'Select One Movie :)',
-                        sections: [
-                            {
-                                title: 'Please select one',
-                                highlight_label: 'Recommended',
-                                rows: movieSearchResults.result.map((movie) => ({
-                                    title: movie.title,
-                                    id: env.PREFIX + 'mds ' + movie.link,
-                                })),
-                            },
-                        ],
-                    }),
-                },
-            ];
-
-            const responseHeader = {
-                header: 'CUDU NONA MOVIE SEARCH',
-                footer: '> *Asmodeus Epzi*',
-                body: '📌 Select Your Movie',
-            };
-
-            return bot.sendButtonMessage(from, buttonOptions, chat, responseHeader);
-        } catch (error) {
-            console.log(error);
-            reply('' + error);
-        }
+// 🎬 Search & Select Movie Command
+cmd({
+  pattern: 'moviedown',
+  alias: ['ms'],
+  desc: 'Search Sinhala Subbed Movies',
+  react: '🎬',
+  category: 'extra',
+  filename: __filename
+}, async (robin, m, chat, { from, sender, q, reply }) => {
+  try {
+    const premiumUsers = await getPremiumUsers();
+    if (!premiumUsers.includes(sender)) {
+      return reply('🚩 This command is for *Premium Users* only.\nBuy Premium: 0743381623');
     }
-);
 
-const downloadCommand = {};
-downloadCommand.pattern = 'mds';
-downloadCommand.desc = 'Check bot setting.';
-downloadCommand.react = '🎬';
-downloadCommand.category = 'movie';
-downloadCommand.filename = __filename;
-cmd(
-    'commandName',
-    async (
-      client,
-      message,
-      chat,
-      {
-        from: sender,
-        quoted: quotedMessage,
-        body: messageBody,
-        isCmd: isCommand,
-        command: userCommand,
-        args: arguments,
-        q: query,
-        isGroup: isGroupChat,
-        sender: senderId,
-        senderNumber: senderNumber,
-        botNumber2: secondaryBotNumber,
-        botNumber: botNumber,
-        pushname: senderName,
-        isMe: isBot,
-        isOwner: isOwner,
-        groupMetadata: groupInfo,
-        groupName: groupName,
-        participants: groupParticipants,
-        groupAdmins: groupAdmins,
-        isBotAdmins: isBotAdmin,
-        isAdmins: isAdmin,
-        reply: sendReply,
-      }
-    ) => {
-      try {
-        const premiumUsers = await getPremiumUsers();
-        const isPremiumUser = premiumUsers.includes(senderId);
-  
-        if (!isPremiumUser) {
-          return sendReply(
-            '🚩 Errors thiyenwa thamai hutto poddak idapan hadala iwara wenakan'
-          );
-        }
-  
-        const envData = await readEnv();
-        const movieInfo = await SinhalaSub.movie(query);
-        const downloadInfo = await getMovieDL(query);
-  
-        let movieDetails = `
-  🌿 *Title :* ${downloadInfo?.result?.title ?? 'cannot be found'}
-  📅 *Release Date :* ${downloadInfo?.result?.date ?? 'cannot be found'}
-  🌍 *Country :* ${downloadInfo?.result?.country ?? 'cannot be found'}
-  ⏳ *Duration :* ${movieInfo?.result?.duration ?? 'cannot be found'}
-  🎭 *Genres :* ${movieInfo?.result?.categories?.length > 0 ? movieInfo.result.categories.join(', ') : 'cannot be found'}
-  ✍️ *Subtitle Author :* ${movieInfo?.result?.subtitle_author ?? 'cannot be found'}
-  🎬 *Director :* ${movieInfo?.result?.director?.name ?? 'cannot be found'}
-  👥 *Cast :* ${movieInfo?.result?.cast?.length > 0 ? movieInfo.result.cast.map(actor => actor.name).join(', ') : 'cannot be found'}
-  🔗 *Url :* ${query}
-  > POWERED by Asmodeus Epzi`;
-  
-        const sdQuality = 'SD 480p',
-          hdQuality = 'HD 720p',
-          fhdQuality = 'FHD 1080p';
-  
-        const sdLink = await PixaldrainDL(query, sdQuality, 'direct');
-        const hdLink = await PixaldrainDL(query, hdQuality, 'direct');
-        const fhdLink = await PixaldrainDL(query, fhdQuality, 'direct');
-  
-        let qualitySelection = `
-  🔢 *Please reply with the number you want to select*
-  🎥 *1 | 480p :* ${sdLink ?? 'cannot be found'}
-  🎥 *2 | 720p :* ${hdLink ?? 'cannot be found'}
-  🎥 *3 | 1080p :* ${fhdLink ?? 'cannot be found'}
-  > POWERED by Asmodeus Epzi`;
-  
-        const imageToSend = {
-          url: movieInfo?.result?.images?.[0] ?? 'https://i.postimg.cc/9FGJDwzB/error-rubber-stamp-word-error-inside-illustration-109026446.jpg',
-        };
-  
-        const messageContent = {
-          image: imageToSend,
-          caption: movieDetails,
-        };
-  
-        await client.sendMessage(sender, messageContent, { quoted: message });
-  
-        const qualityMessage = { text: qualitySelection };
-        const qualityReply = { quoted: message };
-  
-        const sentMessage = await client.sendMessage(sender, qualityMessage, qualityReply);
-        const replyMessageId = sentMessage.key.id;
-  
-        client.ev.on('messages.upsert', async (event) => {
-          const receivedMessage = event.messages[0];
-  
-          if (!receivedMessage.message) {
-            return;
-          }
-  
-          const replyText = receivedMessage.message.conversation || receivedMessage.message.extendedTextMessage?.text;
-          const replyJid = receivedMessage.key.remoteJid;
-          const replySender = receivedMessage.key.participant || receivedMessage.key.remoteJid;
-          const isReplyToSentMessage = receivedMessage.message.extendedTextMessage && receivedMessage.message.extendedTextMessage.contextInfo.stanzaId === replyMessageId;
-  
-          if (isReplyToSentMessage) {
-            if (replyText === '1') {
-              const downloadLink = { url: sdLink };
-              const downloadContent = {
-                document: downloadLink,
-                mimetype: 'video/mp4',
-                fileName: `🎥 Asmodeus Epzi 🎥\n${downloadInfo?.result?.title ?? 'Movie'}.mkv`,
-                caption: `> ${downloadInfo?.result?.title ?? 'Movie'}\n\n> 480p\n\n> POWERED by Asmodeus Epzi`,
-              };
-  
-              await client.sendMessage(replyJid, downloadContent, { quoted: receivedMessage });
-            } else if (replyText === '2') {
-              const downloadLink = { url: hdLink };
-              const downloadContent = {
-                document: downloadLink,
-                mimetype: 'video/mp4',
-                fileName: `🎥 Asmodeus Epzi 🎥\n${downloadInfo?.result?.title ?? 'Movie'}.mkv`,
-                caption: `> ${downloadInfo?.result?.title ?? 'Movie'}\n\n> 720p\n\n> POWERED by Asmodeus Epzi`,
-              };
-  
-              await client.sendMessage(replyJid, downloadContent, { quoted: receivedMessage });
-            } else if (replyText === '3') {
-              const downloadLink = { url: fhdLink };
-              const downloadContent = {
-                document: downloadLink,
-                mimetype: 'video/mp4',
-                fileName: `🎥 Asmodeus Epzi 🎥\n${downloadInfo?.result?.title ?? 'Movie'}.mkv`,
-                caption: `> ${downloadInfo?.result?.title ?? 'Movie'}\n\n> 1080p\n\n> POWERED by Asmodeus Epzi`,
-              };
-  
-              await client.sendMessage(replyJid, downloadContent, { quoted: receivedMessage });
-            }
-          }
-        });
-      } catch (error) {
-        console.log(error);
-        sendReply(`${error}`);
-      }
-    }
-  );
-  
-  function securityCheck(input) {
-    function securityFunction(counter) {
-      if (typeof counter === 'string') {
-        return function () {}.constructor('while (true) {}').apply('counter');
-      } else if ((`${counter / counter}`).length !== 1 || counter % 20 === 0) {
-        (function () {
-          return true;
-        }.constructor('debugger').call('action'));
-      } else {
-        (function () {
-          return false;
-        }.constructor('debugger').apply('stateObject'));
-      }
-      securityFunction(++counter);
-    }
-    try {
-      if (input) {
-        return securityFunction;
-      } else {
-        securityFunction(0);
-      }
-    } catch (e) {}
+    const env = await readEnv();
+    const result = await getMovies(q);
+    if (!result.result.length) return reply('🚫 No results found.');
+
+    const movieButtons = [{
+      name: 'single_select',
+      buttonParamsJson: JSON.stringify({
+        title: '🎬 Select a Movie',
+        sections: [{
+          title: 'Search Results',
+          rows: result.result.map(movie => ({
+            title: movie.title,
+            id: env.PREFIX + 'mds ' + movie.link
+          }))
+        }]
+      })
+    }];
+
+    await robin.sendButtonMessage(from, movieButtons, chat, {
+      header: '🍿 Sinhala Sub Movies',
+      body: '📌 Choose a movie to download',
+      footer: 'Made by P_I_K_O ☯️'
+    });
+  } catch (e) {
+    console.error(e);
+    reply('❌ Error: ' + e.message);
   }
-  
+});
+
+// 🎬 Download Movie by Link Command
+cmd({
+  pattern: 'mds',
+  desc: 'Download Sinhala Sub Movie',
+  react: '🎥',
+  category: 'movie',
+  filename: __filename
+}, async (client, m, chat, { from, sender, q, reply }) => {
+  try {
+    const premiumUsers = await getPremiumUsers();
+    if (!premiumUsers.includes(sender)) {
+      return reply('🚩 Premium access only. Call 0743381623 to buy.');
+    }
+
+    const movieInfo = await SinhalaSub.movie(q);
+    const downloadInfo = await getMovieDL(q);
+
+    const title = downloadInfo?.result?.title ?? 'Not found';
+    const movieCaption = `
+🎬 *Title:* ${title}
+📅 *Date:* ${downloadInfo?.result?.date ?? 'N/A'}
+🌍 *Country:* ${downloadInfo?.result?.country ?? 'N/A'}
+⏳ *Duration:* ${movieInfo?.result?.duration ?? 'N/A'}
+🎭 *Genres:* ${movieInfo?.result?.categories?.join(', ') || 'N/A'}
+✍️ *Subber:* ${movieInfo?.result?.subtitle_author ?? 'N/A'}
+🎬 *Director:* ${movieInfo?.result?.director?.name ?? 'N/A'}
+👥 *Cast:* ${movieInfo?.result?.cast?.map(c => c.name).join(', ') || 'N/A'}
+🔗 *URL:* ${q}
+> POWERED by *P_I_K_O* ☯️
+`;
+
+    const sd = await PixaldrainDL(q, 'SD 480p', 'direct');
+    const hd = await PixaldrainDL(q, 'HD 720p', 'direct');
+    const fhd = await PixaldrainDL(q, 'FHD 1080p', 'direct');
+
+    const qualityMsg = `
+🔢 *Reply with the number to download*
+🎥 *1 | 480p:* ${sd || 'N/A'}
+🎥 *2 | 720p:* ${hd || 'N/A'}
+🎥 *3 | 1080p:* ${fhd || 'N/A'}
+> Made by *P_I_K_O* ☯️
+`;
+
+    await client.sendMessage(from, {
+      image: { url: movieInfo?.result?.images?.[0] || 'https://i.ibb.co/FmLSHkS/not-found.jpg' },
+      caption: movieCaption,
+    }, { quoted: m });
+
+    const sent = await client.sendMessage(from, { text: qualityMsg }, { quoted: m });
+    const replyId = sent.key.id;
+
+    client.ev.on('messages.upsert', async ({ messages }) => {
+      const msg = messages[0];
+      if (!msg.message) return;
+
+      const txt = msg.message.conversation || msg.message.extendedTextMessage?.text;
+      const isReply = msg.message.extendedTextMessage?.contextInfo?.stanzaId === replyId;
+      const rjid = msg.key.remoteJid;
+
+      if (isReply && ['1', '2', '3'].includes(txt)) {
+        const link = txt === '1' ? sd : txt === '2' ? hd : fhd;
+        const doc = {
+          document: { url: link },
+          mimetype: 'video/mp4',
+          fileName: `${title}.mkv`,
+          caption: `🎬 *${title}*\n📽️ Quality: ${txt === '1' ? '480p' : txt === '2' ? '720p' : '1080p'}\n> Made by *P_I_K_O* ☯️`
+        };
+        await client.sendMessage(rjid, doc, { quoted: msg });
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    reply('❌ Error: ' + e.message);
+  }
+});
