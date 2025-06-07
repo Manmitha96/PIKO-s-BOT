@@ -29,8 +29,7 @@
     "canvas": "^3.1.0",
     "@vreden/youtube_scraper": "^1.2.7",
     "wa-sticker-formatter": "^4.4.4",
-    "@xct007/tiktok-scraper": "^1.0.2",
-    "child_process": "^3.0.2"
+    "@xct007/tiktok-scraper": "^1.0.2"
 
   }
 }
