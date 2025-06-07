@@ -30,9 +30,8 @@
     "@vreden/youtube_scraper": "^1.2.7",
     "wa-sticker-formatter": "^4.4.4",
     "@xct007/tiktok-scraper": "^1.0.2"
-    "dark-yasiya-sinhalasub.lk": "^1.0.3",
-    "@sl-code-lords/movie-api": "^1.0.5",
-    "pixaldrain-sinhalasub": "^1.0.2"
+    "dark-yasiya-sinhalasub.lk": "^1.0.1",
+    "@sl-code-lords/movie-api": "^1.0.0"
 
   }
 }
