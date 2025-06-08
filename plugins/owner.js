@@ -1,24 +1,32 @@
 const { cmd } = require('../command');
 
 /**
- * Helper: Get bot's own WhatsApp ID (handles differences in library implementations)
+ * Helper: Normalize WhatsApp IDs for admin check (handles @c.us vs @s.whatsapp.net)
+ */
+function normalizeId(id) {
+    if (!id) return "";
+    return id.replace(/@c\.us$/, "@s.whatsapp.net").replace(/@s\.whatsapp\.net$/, "@s.whatsapp.net");
+}
+
+/**
+ * Helper: Get bot's own WhatsApp ID
  */
 async function getBotId(robin) {
-    if (robin.user && robin.user.id) return robin.user.id;
+    if (robin.user && robin.user.id) return normalizeId(robin.user.id);
     if (typeof robin.getMe === 'function') {
         const me = await robin.getMe();
-        if (me && me.id) return me.id;
+        if (me && me.id) return normalizeId(me.id);
     }
     throw new Error("Unable to determine bot's WhatsApp ID");
 }
 
 /**
- * Helper: Get all group admin IDs
+ * Helper: Get all group admin IDs, normalized
  */
 function getAdminIds(groupMetadata) {
     return groupMetadata.participants
         .filter(p => p.admin)
-        .map(p => p.id);
+        .map(p => normalizeId(p.id));
 }
 
 /**
@@ -32,9 +40,15 @@ cmd({
 }, async (robin, mek, m, { from, isGroup, reply }) => {
     if (!isGroup) return reply("Not a group");
     const groupMetadata = await robin.groupMetadata(from);
-    const botId = robin.user?.id || (await robin.getMe()).id;
-    const groupAdmins = groupMetadata.participants.filter(p => p.admin).map(a => a.id);
-    return reply(`BotId: ${botId}\nGroupAdmins: ${groupAdmins.join(', ')}\nIsBotAdmin: ${groupAdmins.includes(botId)}`);
+    const botId = await getBotId(robin);
+    const groupAdmins = getAdminIds(groupMetadata);
+    // Print types and raw values for debugging
+    let msg = `BotId: "${botId}"\nAdmins:\n`;
+    groupAdmins.forEach((aid, i) => {
+        msg += `${i+1}. "${aid}"\n`;
+    });
+    msg += `\nIsBotAdmin: ${groupAdmins.includes(botId)}\n`;
+    return reply(msg);
 });
 
 // BLOCK
@@ -91,12 +105,12 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to kick!");
-        const target = quoted.sender;
+        const target = normalizeId(quoted.sender);
         if (groupAdmins.includes(target)) return reply("⚠️ I cannot remove another admin from the group!");
         await robin.groupParticipantsUpdate(from, [target], "remove");
         return reply(`✅ Successfully removed: @${target.split('@')[0]}`);
@@ -138,8 +152,8 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         await robin.groupSettingUpdate(from, "announcement");
@@ -162,8 +176,8 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         await robin.groupSettingUpdate(from, "not_announcement");
@@ -186,12 +200,12 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         if (!args[0]) return reply("⚠️ Please provide the phone number of the user to add!");
-        const target = args[0].includes("@") ? args[0] : `${args[0].replace(/[^0-9]/g, "")}@s.whatsapp.net`;
+        const target = args[0].includes("@") ? normalizeId(args[0]) : normalizeId(`${args[0].replace(/[^0-9]/g, "")}@s.whatsapp.net`);
         await robin.groupParticipantsUpdate(from, [target], "add");
         return reply(`✅ Successfully added: @${target.split('@')[0]}`);
     } catch (e) {
@@ -212,12 +226,12 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to remove admin privileges from!");
-        const target = quoted.sender;
+        const target = normalizeId(quoted.sender);
         if (target === botId) return reply("⚠️ I cannot remove my own admin privileges!");
         if (!groupAdmins.includes(target)) return reply("⚠️ The mentioned user is not an admin!");
         await robin.groupParticipantsUpdate(from, [target], "demote");
@@ -240,12 +254,12 @@ cmd({
     try {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
-        const botId = await getBotId(robin);
         const groupMetadata = await robin.groupMetadata(from);
+        const botId = await getBotId(robin);
         const groupAdmins = getAdminIds(groupMetadata);
         if (!groupAdmins.includes(botId)) return reply("⚠️ I need to be an admin to execute this command!");
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to promote to admin!");
-        const target = quoted.sender;
+        const target = normalizeId(quoted.sender);
         if (groupAdmins.includes(target)) return reply("⚠️ The mentioned user is already an admin!");
         await robin.groupParticipantsUpdate(from, [target], "promote");
         return reply(`✅ Successfully promoted @${target.split('@')[0]} to admin!`);
