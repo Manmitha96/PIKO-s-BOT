@@ -1,11 +1,20 @@
 const { cmd } = require('../command');
 
-// Utility function to check if bot is admin
-async function isBotAdmin(robin, from) {
-    const metadata = await robin.groupMetadata(from);
-    const botId = robin.user.id;
-    return metadata.participants.some(p => p.id === botId && p.admin !== null);
-}
+cmd({
+    pattern: "block",
+    react: "⚠️",
+    alias: ["ban"],
+    desc: "Block a user instantly.",
+    category: "main",
+    filename: __filename
+},
+async (robin, mek, m, { quoted, reply, isOwner }) => {
+    if (!isOwner) return reply("⚠️ Only the owner can use this command!");
+    if (!quoted) return reply("⚠️ Please reply to the user's message to block them!");
+    const target = quoted.sender;
+    await robin.updateBlockStatus(target, "block");
+    return reply(`✅ Successfully blocked: @${target.split('@')[0]}`);
+});
 
 cmd({
     pattern: "kick",
@@ -16,52 +25,43 @@ cmd({
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
-    try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
+    if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+    if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
-        const isBotAdmins = await isBotAdmin(robin, from);
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const botData = metadata.participants.find(p => p.id === botId);
+    if (!botData?.admin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        if (!quoted || !quoted.sender) return reply("⚠️ Please reply to the user's message you want to kick!");
+    if (!quoted) return reply("⚠️ Please reply to the user's message you want to kick!");
+    const target = quoted.sender;
 
-        const target = quoted.sender;
-        const groupMetadata = await robin.groupMetadata(from);
-        const groupAdmins = groupMetadata.participants.filter(p => p.admin !== null).map(a => a.id);
+    const groupAdmins = metadata.participants.filter(p => p.admin).map(p => p.id);
+    if (groupAdmins.includes(target)) return reply("⚠️ I cannot remove another admin!");
 
-        if (groupAdmins.includes(target)) return reply("⚠️ I cannot remove another admin!");
-
-        await robin.groupParticipantsUpdate(from, [target], "remove");
-        return reply(`✅ Successfully removed: @${target.split('@')[0]}`, { mentions: [target] });
-
-    } catch (e) {
-        console.error("Kick Error:", e);
-        reply(`❌ Failed to remove the user. Error: ${e.message}`);
-    }
+    await robin.groupParticipantsUpdate(from, [target], "remove");
+    return reply(`✅ Successfully removed: @${target.split('@')[0]}`);
 });
 
 cmd({
     pattern: "mute",
-    alias: ["silence", "lock"],
+    alias: ["silence"],
     react: "⚠️",
     desc: "Set group chat to admin-only messages.",
     category: "main",
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply }) => {
-    try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ This command is only for group admins!");
+    if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+    if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
-        const isBotAdmins = await isBotAdmin(robin, from);
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const botData = metadata.participants.find(p => p.id === botId);
+    if (!botData?.admin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        await robin.groupSettingUpdate(from, "announcement");
-        return reply("✅ Group has been muted. Only admins can send messages now!");
-    } catch (e) {
-        console.error("Mute Error:", e);
-        reply(`❌ Failed to mute the group. Error: ${e.message}`);
-    }
+    await robin.groupSettingUpdate(from, "announcement");
+    return reply("✅ Group has been muted. Only admins can send messages now!");
 });
 
 cmd({
@@ -73,83 +73,88 @@ cmd({
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply }) => {
-    try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ This command is only for group admins!");
+    if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+    if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
-        const isBotAdmins = await isBotAdmin(robin, from);
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const botData = metadata.participants.find(p => p.id === botId);
+    if (!botData?.admin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        await robin.groupSettingUpdate(from, "not_announcement");
-        return reply("✅ Group has been unmuted. Everyone can send messages now!");
-    } catch (e) {
-        console.error("Unmute Error:", e);
-        reply(`❌ Failed to unmute the group. Error: ${e.message}`);
-    }
+    await robin.groupSettingUpdate(from, "not_announcement");
+    return reply("✅ Group has been unmuted. Everyone can send messages now!");
 });
 
 cmd({
     pattern: "promote",
-    alias: ["admin", "makeadmin"],
+    alias: ["admin"],
     react: "⚡",
     desc: "Grant admin privileges to a mentioned user.",
     category: "main",
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
-    try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
+    if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+    if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
-        const isBotAdmins = await isBotAdmin(robin, from);
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const botData = metadata.participants.find(p => p.id === botId);
+    if (!botData?.admin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        if (!quoted || !quoted.sender) return reply("⚠️ Please reply to the user's message you want to promote!");
+    if (!quoted) return reply("⚠️ Please reply to the user’s message you want to promote!");
+    const target = quoted.sender;
 
-        const target = quoted.sender;
-        const groupMetadata = await robin.groupMetadata(from);
-        const groupAdmins = groupMetadata.participants.filter(p => p.admin !== null).map(a => a.id);
+    const groupAdmins = metadata.participants.filter(p => p.admin).map(p => p.id);
+    if (groupAdmins.includes(target)) return reply("⚠️ That user is already an admin!");
 
-        if (groupAdmins.includes(target)) return reply("⚠️ The mentioned user is already an admin!");
-
-        await robin.groupParticipantsUpdate(from, [target], "promote");
-        return reply(`✅ Successfully promoted @${target.split('@')[0]} to admin!`, { mentions: [target] });
-
-    } catch (e) {
-        console.error("Promote Admin Error:", e);
-        reply(`❌ Failed to promote the user. Error: ${e.message}`);
-    }
+    await robin.groupParticipantsUpdate(from, [target], "promote");
+    return reply(`✅ Promoted @${target.split('@')[0]} to admin!`);
 });
 
 cmd({
     pattern: "demote",
     alias: ["member"],
     react: "⚠️",
-    desc: "Remove admin privileges from a mentioned user.",
+    desc: "Remove admin privileges from a user.",
     category: "main",
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
-    try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
+    if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+    if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
-        const isBotAdmins = await isBotAdmin(robin, from);
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const botData = metadata.participants.find(p => p.id === botId);
+    if (!botData?.admin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        if (!quoted || !quoted.sender) return reply("⚠️ Please reply to the user's message you want to demote!");
+    if (!quoted) return reply("⚠️ Please reply to the user’s message you want to demote!");
+    const target = quoted.sender;
 
-        const target = quoted.sender;
-        const groupMetadata = await robin.groupMetadata(from);
-        const groupAdmins = groupMetadata.participants.filter(p => p.admin !== null).map(a => a.id);
+    const groupAdmins = metadata.participants.filter(p => p.admin).map(p => p.id);
+    if (!groupAdmins.includes(target)) return reply("⚠️ That user is not an admin!");
 
-        if (!groupAdmins.includes(target)) return reply("⚠️ The mentioned user is not an admin!");
+    await robin.groupParticipantsUpdate(from, [target], "demote");
+    return reply(`✅ Demoted @${target.split('@')[0]} from admin.`);
+});
 
-        await robin.groupParticipantsUpdate(from, [target], "demote");
-        return reply(`✅ Successfully demoted @${target.split('@')[0]} to member!`, { mentions: [target] });
-
-    } catch (e) {
-        console.error("Demote Admin Error:", e);
-        reply(`❌ Failed to demote the user. Error: ${e.message}`);
+cmd({
+    pattern: "botcheck",
+    desc: "Check if the bot is admin in the group.",
+    category: "main",
+    filename: __filename
+},
+async (robin, mek, m, { from, isGroup, reply }) => {
+    if (!isGroup) return reply("❗ Only available in groups.");
+    const metadata = await robin.groupMetadata(from);
+    const botId = robin.user.id;
+    const entry = metadata.participants.find(p => p.id === botId);
+    console.log("🧪 Bot ID:", botId);
+    console.log("🧪 Bot Participant Entry:", entry);
+    if (entry && entry.admin !== null) {
+        return reply("✅ I am admin!");
+    } else {
+        return reply("❌ I am NOT admin!");
     }
 });
