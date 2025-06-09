@@ -8,30 +8,25 @@ const {
   Browsers,
 } = require("@whiskeysockets/baileys");
 
-const l = console.log;
-const {
-  getBuffer,
-  getGroupAdmins,
-  getRandom,
-  h2k,
-  isUrl,
-  Json,
-  runtime,
-  sleep,
-  fetchJson,
-} = require("./lib/functions");
 const fs = require("fs");
 const P = require("pino");
 const config = require("./config");
 const qrcode = require("qrcode-terminal");
-const util = require("util");
-const { sms, downloadMediaMessage } = require("./lib/msg");
 const axios = require("axios");
+const express = require("express");
+const {
+  getBuffer,
+  getRandom,
+  runtime,
+  fetchJson,
+  sleep,
+} = require("./lib/functions");
+const { sms, downloadMediaMessage } = require("./lib/msg");
 const { File } = require("megajs");
 const prefix = config.PREFIX;
 const ownerNumber = config.OWNER_NUM;
 
-//===================SESSION-AUTH============================
+// Session Auth
 if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
   if (!config.SESSION_ID)
     return console.log("Please add your session to SESSION_ID env !!");
@@ -39,21 +34,30 @@ if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
   const filer = File.fromURL(`https://mega.nz/file/${sessdata}`);
   filer.download((err, data) => {
     if (err) throw err;
-    fs.writeFile(__dirname + "/auth_info_baileys/creds.json", data, () => {
-      console.log("SESSION DOWNLOADED ✅");
-    });
+    fs.writeFile(
+      __dirname + "/auth_info_baileys/creds.json",
+      data,
+      () => {
+        console.log("SESSION DOWNLOADED ✅");
+      }
+    );
   });
 }
 
-const express = require("express");
 const app = express();
 const port = process.env.PORT || 8000;
 
+// Get group admins
+function getGroupAdmins(participants) {
+  return participants.filter(p => p.admin !== null).map(p => p.id);
+}
+
 async function connectToWA() {
   console.log("Connecting 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝");
-
-  const { state, saveCreds } = await useMultiFileAuthState(__dirname + "/auth_info_baileys/");
-  const { version } = await fetchLatestBaileysVersion();
+  const { state, saveCreds } = await useMultiFileAuthState(
+    __dirname + "/auth_info_baileys/"
+  );
+  var { version } = await fetchLatestBaileysVersion();
 
   const robin = makeWASocket({
     logger: P({ level: "silent" }),
@@ -67,40 +71,34 @@ async function connectToWA() {
   robin.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
-      if (lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
+      if (
+        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+      ) {
         connectToWA();
       }
     } else if (connection === "open") {
-      console.log(" Installing... ");
+      console.log("BOT connected ✅");
+
+      // Load plugins
       const path = require("path");
       fs.readdirSync("./plugins/").forEach((plugin) => {
         if (path.extname(plugin).toLowerCase() == ".js") {
           require("./plugins/" + plugin);
         }
       });
-      console.log("💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 installed successful ✅");
-      console.log("💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 connected to whatsapp ✅");
 
-      let up = `💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝 connected successful ✅`;
-      let up1 = `Hello PIKO, I made bot successful`;
-
+      // Send startup message
       robin.sendMessage(ownerNumber + "@s.whatsapp.net", {
         image: {
           url: `https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg`,
         },
-        caption: up,
-      });
-
-      robin.sendMessage("94726939427@s.whatsapp.net", {
-        image: {
-          url: `https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg`,
-        },
-        caption: up1,
+        caption: "💟 BOT connected successfully ✅",
       });
     }
   });
 
   robin.ev.on("creds.update", saveCreds);
+
   robin.ev.on("messages.upsert", async (mek) => {
     mek = mek.messages[0];
     if (!mek.message) return;
@@ -109,306 +107,96 @@ async function connectToWA() {
       getContentType(mek.message) === "ephemeralMessage"
         ? mek.message.ephemeralMessage.message
         : mek.message;
-
-    if (mek.key && mek.key.remoteJid === "status@broadcast") return;
+    if (mek.key.remoteJid === "status@broadcast") return;
 
     const m = sms(robin, mek);
     const type = getContentType(mek.message);
-    const content = JSON.stringify(mek.message);
-    const from = mek.key.remoteJid;
-    const quoted =
-      type == "extendedTextMessage" &&
-      mek.message.extendedTextMessage.contextInfo != null
-        ? mek.message.extendedTextMessage.contextInfo.quotedMessage || []
-        : [];
-
     const body =
       type === "conversation"
         ? mek.message.conversation
         : type === "extendedTextMessage"
         ? mek.message.extendedTextMessage.text
-        : type == "imageMessage" && mek.message.imageMessage.caption
+        : type === "imageMessage" && mek.message.imageMessage.caption
         ? mek.message.imageMessage.caption
-        : type == "videoMessage" && mek.message.videoMessage.caption
+        : type === "videoMessage" && mek.message.videoMessage.caption
         ? mek.message.videoMessage.caption
         : "";
 
     const isCmd = body.startsWith(prefix);
-    const command = isCmd
-      ? body.slice(prefix.length).trim().split(" ").shift().toLowerCase()
-      : "";
+    const command = isCmd ? body.slice(prefix.length).split(" ")[0].toLowerCase() : "";
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
+    const from = mek.key.remoteJid;
     const isGroup = from.endsWith("@g.us");
-
-    const botJid = robin.user.id.endsWith("@s.whatsapp.net")
-      ? robin.user.id
-      : robin.user.id.split(":")[0] + "@s.whatsapp.net";
-
     const sender = mek.key.fromMe
-      ? botJid
+      ? jidNormalizedUser(robin.user.id)
       : mek.key.participant || mek.key.remoteJid;
     const senderNumber = sender.split("@")[0];
-    const botNumber = botJid.split("@")[0];
+    const botNumber = jidNormalizedUser(robin.user.id);
+
+    const isOwner = ownerNumber.includes(senderNumber);
     const pushname = mek.pushName || "Sin Nombre";
-    const isMe = botNumber.includes(senderNumber);
-    const isOwner = ownerNumber.includes(senderNumber) || isMe;
 
-    let groupMetadata = "";
-    if (isGroup) {
-      try {
-        groupMetadata = await robin.groupMetadata(from);
-      } catch (e) {
-        console.error("Failed to fetch groupMetadata:", e);
-      }
-    }
-
+    const groupMetadata = isGroup ? await robin.groupMetadata(from).catch(() => {}) : "";
     const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? groupMetadata.participants || [] : [];
+    const participants = isGroup ? groupMetadata.participants : [];
     const groupAdmins = isGroup ? getGroupAdmins(participants) : [];
-    const isBotAdmins = isGroup ? groupAdmins.includes(botJid) : false;
+    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
 
-    const isReact = m.message.reactionMessage ? true : false;
-    const reply = (teks) => {
-      robin.sendMessage(from, { text: teks }, { quoted: mek });
-    };
+    const reply = (teks) => robin.sendMessage(from, { text: teks }, { quoted: mek });
 
-    robin.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
-      let mime = "";
-      let res = await axios.head(url);
-      mime = res.headers["content-type"];
-      if (mime.split("/")[1] === "gif") {
-        return robin.sendMessage(
-          jid,
-          {
-            video: await getBuffer(url),
-            caption: caption,
-            gifPlayback: true,
-            ...options,
-          },
-          { quoted: quoted, ...options }
-        );
-      }
-      let type = mime.split("/")[0] + "Message";
-      if (mime === "application/pdf") {
-        return robin.sendMessage(
-          jid,
-          {
-            document: await getBuffer(url),
-            mimetype: "application/pdf",
-            caption: caption,
-            ...options,
-          },
-          { quoted: quoted, ...options }
-        );
-      }
-      if (mime.split("/")[0] === "image") {
-        return robin.sendMessage(
-          jid,
-          { image: await getBuffer(url), caption: caption, ...options },
-          { quoted: quoted, ...options }
-        );
-      }
-      if (mime.split("/")[0] === "video") {
-        return robin.sendMessage(
-          jid,
-          {
-            video: await getBuffer(url),
-            caption: caption,
-            mimetype: "video/mp4",
-            ...options,
-          },
-          { quoted: quoted, ...options }
-        );
-      }
-      if (mime.split("/")[0] === "audio") {
-        return robin.sendMessage(
-          jid,
-          {
-            audio: await getBuffer(url),
-            caption: caption,
-            mimetype: "audio/mpeg",
-            ...options,
-          },
-          { quoted: quoted, ...options }
-        );
-      }
-    };
+    console.log({
+      botNumber,
+      groupAdmins,
+      isBotAdmins,
+      isAdmins,
+    });
 
-    // Auto react
-    if (senderNumber.includes("94726939427")) {
-      if (!isReact) m.react("💟");
-    }
-    if (senderNumber.includes("94756473404")) {
-      if (!isReact) m.react("〽️");
-    }
-
-    // Work mode check
+    // Command handler
     if (!isOwner && config.MODE === "private") return;
     if (!isOwner && isGroup && config.MODE === "inbox") return;
     if (!isOwner && !isGroup && config.MODE === "groups") return;
 
-    // Commands
     const events = require("./command");
-    const cmdName = isCmd ? body.slice(1).trim().split(" ")[0].toLowerCase() : false;
+    const cmd = events.commands.find((cmd) => cmd.pattern === command || (cmd.alias && cmd.alias.includes(command)));
 
-    if (isCmd) {
-      const cmd =
-        events.commands.find((cmd) => cmd.pattern === cmdName) ||
-        events.commands.find((cmd) => cmd.alias && cmd.alias.includes(cmdName));
-
-      if (cmd) {
-        if (cmd.react)
-          robin.sendMessage(from, { react: { text: cmd.react, key: mek.key } });
-
-        try {
-          cmd.function(robin, mek, m, {
-            from,
-            quoted,
-            body,
-            isCmd,
-            command,
-            args,
-            q,
-            isGroup,
-            sender,
-            senderNumber,
-            botNumber,
-            botJid,
-            pushname,
-            isMe,
-            isOwner,
-            groupMetadata,
-            groupName,
-            participants,
-            groupAdmins,
-            isBotAdmins,
-            isAdmins,
-            reply,
-          });
-        } catch (e) {
-          console.error("[PLUGIN ERROR] " + e);
-        }
+    if (isCmd && cmd) {
+      try {
+        cmd.function(robin, mek, m, {
+          from,
+          quoted: mek,
+          body,
+          isCmd,
+          command,
+          args,
+          q,
+          isGroup,
+          sender,
+          senderNumber,
+          botNumber,
+          pushname,
+          isOwner,
+          groupMetadata,
+          groupName,
+          participants,
+          groupAdmins,
+          isBotAdmins,
+          isAdmins,
+          reply,
+        });
+      } catch (e) {
+        console.error("[PLUGIN ERROR]", e);
       }
     }
-
-    // Passive listeners
-    events.commands.map(async (command) => {
-      if (body && command.on === "body") {
-        command.function(robin, mek, m, {
-          from,
-          l,
-          quoted,
-          body,
-          isCmd,
-          command,
-          args,
-          q,
-          isGroup,
-          sender,
-          senderNumber,
-          botNumber,
-          botJid,
-          pushname,
-          isMe,
-          isOwner,
-          groupMetadata,
-          groupName,
-          participants,
-          groupAdmins,
-          isBotAdmins,
-          isAdmins,
-          reply,
-        });
-      } else if (mek.q && command.on === "text") {
-        command.function(robin, mek, m, {
-          from,
-          l,
-          quoted,
-          body,
-          isCmd,
-          command,
-          args,
-          q,
-          isGroup,
-          sender,
-          senderNumber,
-          botNumber,
-          botJid,
-          pushname,
-          isMe,
-          isOwner,
-          groupMetadata,
-          groupName,
-          participants,
-          groupAdmins,
-          isBotAdmins,
-          isAdmins,
-          reply,
-        });
-      } else if ((command.on === "image" || command.on === "photo") && mek.type === "imageMessage") {
-        command.function(robin, mek, m, {
-          from,
-          l,
-          quoted,
-          body,
-          isCmd,
-          command,
-          args,
-          q,
-          isGroup,
-          sender,
-          senderNumber,
-          botNumber,
-          botJid,
-          pushname,
-          isMe,
-          isOwner,
-          groupMetadata,
-          groupName,
-          participants,
-          groupAdmins,
-          isBotAdmins,
-          isAdmins,
-          reply,
-        });
-      } else if (command.on === "sticker" && mek.type === "stickerMessage") {
-        command.function(robin, mek, m, {
-          from,
-          l,
-          quoted,
-          body,
-          isCmd,
-          command,
-          args,
-          q,
-          isGroup,
-          sender,
-          senderNumber,
-          botNumber,
-          botJid,
-          pushname,
-          isMe,
-          isOwner,
-          groupMetadata,
-          groupName,
-          participants,
-          groupAdmins,
-          isBotAdmins,
-          isAdmins,
-          reply,
-        });
-      }
-    });
   });
 }
 
 app.get("/", (req, res) => {
-  res.send("hey, 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝-BOT started✅");
+  res.send("BOT running ✅");
 });
 
-app.listen(port, () => console.log(`Server listening on port http://localhost:${port}`));
+app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
 
 setTimeout(() => {
   connectToWA();
