@@ -47,9 +47,12 @@ if (!fs.existsSync(__dirname + "/auth_info_baileys/creds.json")) {
 const app = express();
 const port = process.env.PORT || 8000;
 
-// Get group admins
+// Fix getGroupAdmins function
 function getGroupAdmins(participants) {
-  return participants.filter(p => p.admin !== null).map(p => p.id);
+  // Only participants with admin property set to 'admin' or 'superadmin' count as admins
+  return participants
+    .filter(p => p.admin === "admin" || p.admin === "superadmin")
+    .map(p => p.id);
 }
 
 async function connectToWA() {
@@ -128,38 +131,58 @@ async function connectToWA() {
     const q = args.join(" ");
     const from = mek.key.remoteJid;
     const isGroup = from.endsWith("@g.us");
+
+    // Normalize sender ID
     const sender = mek.key.fromMe
       ? jidNormalizedUser(robin.user.id)
       : mek.key.participant || mek.key.remoteJid;
     const senderNumber = sender.split("@")[0];
+
     const botNumber = jidNormalizedUser(robin.user.id);
 
     const isOwner = ownerNumber.includes(senderNumber);
     const pushname = mek.pushName || "Sin Nombre";
 
-    const groupMetadata = isGroup ? await robin.groupMetadata(from).catch(() => {}) : "";
-    const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? groupMetadata.participants : [];
+    // Group metadata
+    const groupMetadata = isGroup ? await robin.groupMetadata(from).catch(() => {}) : null;
+    const groupName = isGroup && groupMetadata ? groupMetadata.subject : "";
+    const participants = isGroup && groupMetadata ? groupMetadata.participants : [];
+
+    // Correct getGroupAdmins call
     const groupAdmins = isGroup ? getGroupAdmins(participants) : [];
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber) : false;
-    const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
+
+    // IMPORTANT FIXES HERE:
+    // Both botNumber and sender must be normalized JIDs to match groupAdmins list format
+    // Normalize the JIDs for matching
+    const normalizedBotNumber = jidNormalizedUser(botNumber);
+    const normalizedSender = jidNormalizedUser(sender);
+
+    // Check if bot is admin
+    const isBotAdmins = isGroup ? groupAdmins.includes(normalizedBotNumber) : false;
+
+    // Check if sender is admin
+    const isAdmins = isGroup ? groupAdmins.includes(normalizedSender) : false;
 
     const reply = (teks) => robin.sendMessage(from, { text: teks }, { quoted: mek });
 
+    // Debug logs for verification
     console.log({
-      botNumber,
+      botNumber: normalizedBotNumber,
+      sender: normalizedSender,
       groupAdmins,
       isBotAdmins,
       isAdmins,
     });
 
-    // Command handler
+    // Command handler permission checks
     if (!isOwner && config.MODE === "private") return;
     if (!isOwner && isGroup && config.MODE === "inbox") return;
     if (!isOwner && !isGroup && config.MODE === "groups") return;
 
     const events = require("./command");
-    const cmd = events.commands.find((cmd) => cmd.pattern === command || (cmd.alias && cmd.alias.includes(command)));
+    const cmd = events.commands.find(
+      (cmd) => cmd.pattern === command || (cmd.alias && cmd.alias.includes(command))
+    );
 
     if (isCmd && cmd) {
       try {
@@ -172,9 +195,9 @@ async function connectToWA() {
           args,
           q,
           isGroup,
-          sender,
+          sender: normalizedSender,
           senderNumber,
-          botNumber,
+          botNumber: normalizedBotNumber,
           pushname,
           isOwner,
           groupMetadata,
