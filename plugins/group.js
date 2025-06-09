@@ -12,7 +12,6 @@ cmd(
   async (robin, mek, m, { from, args, isGroup, isBotAdmin, isAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
     if (!isAdmin) return reply("You must be a group admin to use this command.");
-    if (!isBotAdmin) return reply("I need to be an admin to add members.");
     if (!args[0]) return reply("Please provide the number to add (without @).");
     let number = args[0].replace(/[^0-9]/g, "") + "@s.whatsapp.net";
     await robin.groupParticipantsUpdate(from, [number], "add");
@@ -31,7 +30,6 @@ cmd(
   async (robin, mek, m, { from, mentionByTag, isGroup, isAdmin, isBotAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
     if (!isAdmin) return reply("Only group admins can promote members.");
-    if (!isBotAdmin) return reply("I need to be an admin to promote members.");
     const users = mentionByTag || [];
     if (users.length === 0) return reply("Tag a member to promote.");
     await robin.groupParticipantsUpdate(from, users, "promote");
@@ -50,7 +48,6 @@ cmd(
   async (robin, mek, m, { from, mentionByTag, isGroup, isAdmin, isBotAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
     if (!isAdmin) return reply("Only group admins can demote admins.");
-    if (!isBotAdmin) return reply("I need to be an admin to demote admins.");
     const users = mentionByTag || [];
     if (users.length === 0) return reply("Tag an admin to demote.");
     await robin.groupParticipantsUpdate(from, users, "demote");
@@ -69,7 +66,6 @@ cmd(
   async (robin, mek, m, { from, isGroup, isAdmin, isBotAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
     if (!isAdmin) return reply("Only group admins can mute the group.");
-    if (!isBotAdmin) return reply("I need to be an admin to mute the group.");
     await robin.groupSettingUpdate(from, "announcement");
     reply("Group has been muted. Only admins can send messages.");
   }
@@ -86,7 +82,6 @@ cmd(
   async (robin, mek, m, { from, isGroup, isAdmin, isBotAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
     if (!isAdmin) return reply("Only group admins can unmute the group.");
-    if (!isBotAdmin) return reply("I need to be an admin to unmute the group.");
     await robin.groupSettingUpdate(from, "not_announcement");
     reply("Group has been unmuted. Everyone can send messages.");
   }
@@ -102,7 +97,6 @@ cmd(
   },
   async (robin, mek, m, { from, participants, isGroup, isAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
-    if (!isAdmin) return reply("Only group admins can tag all members.");
     let text = "👥 *Tagging all members:*\n\n";
     let mentions = [];
     for (let p of participants) {
@@ -123,7 +117,6 @@ cmd(
   },
   async (robin, mek, m, { from, participants, isGroup, isAdmin, args, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
-    if (!isAdmin) return reply("Only group admins can use hidetag.");
     let message = args.join(" ") || "Hidden tag!";
     let mentions = participants.map(p => p.id);
     await robin.sendMessage(from, { text: message, mentions }, { quoted: mek });
