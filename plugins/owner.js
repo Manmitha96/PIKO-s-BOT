@@ -146,15 +146,27 @@ cmd({
     filename: __filename
 },
 async (robin, mek, m, { from, isGroup, reply }) => {
-    if (!isGroup) return reply("❗ Only available in groups.");
-    const metadata = await robin.groupMetadata(from);
-    const botId = robin.user.id;
-    const entry = metadata.participants.find(p => p.id === botId);
-    console.log("🧪 Bot ID:", botId);
-    console.log("🧪 Bot Participant Entry:", entry);
-    if (entry && entry.admin !== null) {
-        return reply("✅ I am admin!");
-    } else {
-        return reply("❌ I am NOT admin!");
+    try {
+        if (!isGroup) return reply("❗ Only available in groups.");
+        
+        const metadata = await robin.groupMetadata(from);
+
+        // Strip any suffix after ':' in bot ID for matching
+        const botId = robin.user.id.split(':')[0];
+
+        const entry = metadata.participants.find(p => p.id === botId);
+
+        if (!entry) {
+            return reply("❌ I am not in this group!");
+        }
+
+        if (entry.admin === "admin" || entry.admin === "superadmin") {
+            return reply("✅ I am admin!");
+        } else {
+            return reply("❌ I am NOT admin!");
+        }
+    } catch (error) {
+        console.error("Error checking bot admin status:", error);
+        return reply("❌ Something went wrong while checking admin status.");
     }
 });
