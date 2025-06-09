@@ -49,12 +49,7 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 8000;
 
-//=============================================
-
 async function connectToWA() {
-
-  //===========================
-
   console.log("Connecting 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝");
   const { state, saveCreds } = await useMultiFileAuthState(
     __dirname + "/auth_info_baileys/"
@@ -106,7 +101,9 @@ async function connectToWA() {
       });
     }
   });
+
   robin.ev.on("creds.update", saveCreds);
+
   robin.ev.on("messages.upsert", async (mek) => {
     mek = mek.messages[0];
     if (!mek.message) return;
@@ -116,8 +113,8 @@ async function connectToWA() {
         : mek.message;
     if (
       mek.key &&
-      mek.key.remoteJid === "status@broadcast") return  
-    
+      mek.key.remoteJid === "status@broadcast") return;
+
     const m = sms(robin, mek);
     const type = getContentType(mek.message);
     const content = JSON.stringify(mek.message);
@@ -145,23 +142,36 @@ async function connectToWA() {
     const q = args.join(" ");
     const isGroup = from.endsWith("@g.us");
     const sender = mek.key.fromMe
-      ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
+      ? (await jidNormalizedUser(robin.user.id))
       : mek.key.participant || mek.key.remoteJid;
     const senderNumber = sender.split("@")[0];
-    const botNumber = robin.user.id.split(":")[0];
+    const botNumberJid = await jidNormalizedUser(robin.user.id);
     const pushname = mek.pushName || "Sin Nombre";
-    const isMe = botNumber.includes(senderNumber);
+    const isMe = botNumberJid === sender;
     const isOwner = ownerNumber.includes(senderNumber) || isMe;
-    const botNumber2 = await jidNormalizedUser(robin.user.id);
-    const groupMetadata = isGroup
-      ? await robin.groupMetadata(from).catch((e) => {})
-      : "";
-    const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? await groupMetadata.participants : "";
-    const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
-    const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
-    const isReact = m.message.reactionMessage ? true : false;
+
+    let groupMetadata = "", participants = [], groupAdmins = [];
+    let isBotAdmin = false, isUserAdmin = false;
+
+    if (isGroup) {
+      groupMetadata = await robin.groupMetadata(from).catch((e) => {});
+      participants = groupMetadata?.participants || [];
+      // Admins are those with admin property set
+      groupAdmins = participants.filter(p => p.admin).map(p => jidNormalizedUser(p.id));
+      // Check admin status robustly (avoiding JID format mismatch)
+      isBotAdmin = participants.some(p =>
+        (jidNormalizedUser(p.id) === botNumberJid) && p.admin
+      );
+      isUserAdmin = participants.some(p =>
+        (jidNormalizedUser(p.id) === jidNormalizedUser(sender)) && p.admin
+      );
+    }
+
+    // Debug (uncomment for debugging)
+    // console.log("botNumberJid:", botNumberJid);
+    // console.log("groupAdmins:", groupAdmins);
+    // console.log("isBotAdmin:", isBotAdmin, "isUserAdmin:", isUserAdmin);
+
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
     };
@@ -227,17 +237,19 @@ async function connectToWA() {
         );
       }
     };
-    //owner react
+
+    // owner react
     if (senderNumber.includes("94726939427")) {
-      if (isReact) return;
-        m.react("💟");
+      if (m.message.reactionMessage) return;
+      m.react("💟");
     }
-   
-      if (senderNumber.includes("94756473404")) {
-      if (isReact) return;
-        m.react("〽️")
+
+    if (senderNumber.includes("94756473404")) {
+      if (m.message.reactionMessage) return;
+      m.react("〽️")
     }
-    //work type
+
+    // work type
     if (!isOwner && config.MODE === "private") return;
     if (!isOwner && isGroup && config.MODE === "inbox") return;
     if (!isOwner && !isGroup && config.MODE === "groups") return;
@@ -266,18 +278,18 @@ async function connectToWA() {
             isGroup,
             sender,
             senderNumber,
-            botNumber2,
-            botNumber,
+            botNumber: botNumberJid,
             pushname,
             isMe,
             isOwner,
             groupMetadata,
-            groupName,
+            groupName: isGroup ? groupMetadata.subject : "",
             participants,
             groupAdmins,
-            isBotAdmins,
-            isAdmins,
+            isBotAdmin,
+            isAdmin: isUserAdmin,
             reply,
+            // ...other context as needed
           });
         } catch (e) {
           console.error("[PLUGIN ERROR] " + e);
@@ -298,17 +310,16 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
-          botNumber,
+          botNumber: botNumberJid,
           pushname,
           isMe,
           isOwner,
           groupMetadata,
-          groupName,
+          groupName: isGroup ? groupMetadata.subject : "",
           participants,
           groupAdmins,
-          isBotAdmins,
-          isAdmins,
+          isBotAdmin,
+          isAdmin: isUserAdmin,
           reply,
         });
       } else if (mek.q && command.on === "text") {
@@ -324,17 +335,16 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
-          botNumber,
+          botNumber: botNumberJid,
           pushname,
           isMe,
           isOwner,
           groupMetadata,
-          groupName,
+          groupName: isGroup ? groupMetadata.subject : "",
           participants,
           groupAdmins,
-          isBotAdmins,
-          isAdmins,
+          isBotAdmin,
+          isAdmin: isUserAdmin,
           reply,
         });
       } else if (
@@ -353,17 +363,16 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
-          botNumber,
+          botNumber: botNumberJid,
           pushname,
           isMe,
           isOwner,
           groupMetadata,
-          groupName,
+          groupName: isGroup ? groupMetadata.subject : "",
           participants,
           groupAdmins,
-          isBotAdmins,
-          isAdmins,
+          isBotAdmin,
+          isAdmin: isUserAdmin,
           reply,
         });
       } else if (command.on === "sticker" && mek.type === "stickerMessage") {
@@ -379,17 +388,16 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
-          botNumber,
+          botNumber: botNumberJid,
           pushname,
           isMe,
           isOwner,
           groupMetadata,
-          groupName,
+          groupName: isGroup ? groupMetadata.subject : "",
           participants,
           groupAdmins,
-          isBotAdmins,
-          isAdmins,
+          isBotAdmin,
+          isAdmin: isUserAdmin,
           reply,
         });
       }
@@ -397,6 +405,7 @@ async function connectToWA() {
     //============================================================================
   });
 }
+
 app.get("/", (req, res) => {
   res.send("hey, 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝-BOT started✅");
 });
