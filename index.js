@@ -158,21 +158,21 @@ async function connectToWA() {
     const normalizedSender = jidNormalizedUser(sender);
 
     // Check if bot is admin
-    const isBotAdmins = isGroup ? groupAdmins.includes(normalizedBotNumber) : false;
+    const isBotAdmins = isGroup ? groupAdmins.includes(jidNormalizedUser(botNumber)) : false;
 
     // Check if sender is admin
-    const isAdmins = isGroup ? groupAdmins.includes(normalizedSender) : false;
+    const isAdmins = isGroup ? groupAdmins.includes(jidNormalizedUser(sender)) : false;
 
     const reply = (teks) => robin.sendMessage(from, { text: teks }, { quoted: mek });
 
     // Debug logs for verification
     console.log({
-      botNumber: normalizedBotNumber,
-      sender: normalizedSender,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-    });
+     botNumber,
+     sender,
+     groupAdmins,
+     isBotAdmins,
+     isAdmins
+   });
 
     // Command handler permission checks
     if (!isOwner && config.MODE === "private") return;
