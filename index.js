@@ -49,17 +49,11 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 8000;
 
-//=============================================
-
 async function connectToWA() {
-
-  //===========================
-
   console.log("Connecting 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝");
-  const { state, saveCreds } = await useMultiFileAuthState(
-    __dirname + "/auth_info_baileys/"
-  );
-  var { version } = await fetchLatestBaileysVersion();
+
+  const { state, saveCreds } = await useMultiFileAuthState(__dirname + "/auth_info_baileys/");
+  const { version } = await fetchLatestBaileysVersion();
 
   const robin = makeWASocket({
     logger: P({ level: "silent" }),
@@ -73,9 +67,7 @@ async function connectToWA() {
   robin.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
-      if (
-        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
-      ) {
+      if (lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
         connectToWA();
       }
     } else if (connection === "open") {
@@ -98,6 +90,7 @@ async function connectToWA() {
         },
         caption: up,
       });
+
       robin.sendMessage("94726939427@s.whatsapp.net", {
         image: {
           url: `https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg`,
@@ -106,18 +99,19 @@ async function connectToWA() {
       });
     }
   });
+
   robin.ev.on("creds.update", saveCreds);
   robin.ev.on("messages.upsert", async (mek) => {
     mek = mek.messages[0];
     if (!mek.message) return;
+
     mek.message =
       getContentType(mek.message) === "ephemeralMessage"
         ? mek.message.ephemeralMessage.message
         : mek.message;
-    if (
-      mek.key &&
-      mek.key.remoteJid === "status@broadcast") return  
-    
+
+    if (mek.key && mek.key.remoteJid === "status@broadcast") return;
+
     const m = sms(robin, mek);
     const type = getContentType(mek.message);
     const content = JSON.stringify(mek.message);
@@ -127,6 +121,7 @@ async function connectToWA() {
       mek.message.extendedTextMessage.contextInfo != null
         ? mek.message.extendedTextMessage.contextInfo.quotedMessage || []
         : [];
+
     const body =
       type === "conversation"
         ? mek.message.conversation
@@ -137,6 +132,7 @@ async function connectToWA() {
         : type == "videoMessage" && mek.message.videoMessage.caption
         ? mek.message.videoMessage.caption
         : "";
+
     const isCmd = body.startsWith(prefix);
     const command = isCmd
       ? body.slice(prefix.length).trim().split(" ").shift().toLowerCase()
@@ -144,23 +140,35 @@ async function connectToWA() {
     const args = body.trim().split(/ +/).slice(1);
     const q = args.join(" ");
     const isGroup = from.endsWith("@g.us");
+
+    const botJid = robin.user.id.endsWith("@s.whatsapp.net")
+      ? robin.user.id
+      : robin.user.id.split(":")[0] + "@s.whatsapp.net";
+
     const sender = mek.key.fromMe
-      ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
+      ? botJid
       : mek.key.participant || mek.key.remoteJid;
     const senderNumber = sender.split("@")[0];
-    const botNumber = robin.user.id.split(":")[0];
+    const botNumber = botJid.split("@")[0];
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
     const isOwner = ownerNumber.includes(senderNumber) || isMe;
-    const botNumber2 = await jidNormalizedUser(robin.user.id);
-    const groupMetadata = isGroup
-      ? await robin.groupMetadata(from).catch((e) => {})
-      : "";
+
+    let groupMetadata = "";
+    if (isGroup) {
+      try {
+        groupMetadata = await robin.groupMetadata(from);
+      } catch (e) {
+        console.error("Failed to fetch groupMetadata:", e);
+      }
+    }
+
     const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? await groupMetadata.participants : "";
-    const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
+    const participants = isGroup ? groupMetadata.participants || [] : [];
+    const groupAdmins = isGroup ? getGroupAdmins(participants) : [];
+    const isBotAdmins = isGroup ? groupAdmins.includes(botJid) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
+
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
@@ -227,29 +235,29 @@ async function connectToWA() {
         );
       }
     };
-    //owner react
+
+    // Auto react
     if (senderNumber.includes("94726939427")) {
-      if (isReact) return;
-        m.react("💟");
+      if (!isReact) m.react("💟");
     }
-   
-      if (senderNumber.includes("94756473404")) {
-      if (isReact) return;
-        m.react("〽️")
+    if (senderNumber.includes("94756473404")) {
+      if (!isReact) m.react("〽️");
     }
-    //work type
+
+    // Work mode check
     if (!isOwner && config.MODE === "private") return;
     if (!isOwner && isGroup && config.MODE === "inbox") return;
     if (!isOwner && !isGroup && config.MODE === "groups") return;
 
+    // Commands
     const events = require("./command");
-    const cmdName = isCmd
-      ? body.slice(1).trim().split(" ")[0].toLowerCase()
-      : false;
+    const cmdName = isCmd ? body.slice(1).trim().split(" ")[0].toLowerCase() : false;
+
     if (isCmd) {
       const cmd =
         events.commands.find((cmd) => cmd.pattern === cmdName) ||
         events.commands.find((cmd) => cmd.alias && cmd.alias.includes(cmdName));
+
       if (cmd) {
         if (cmd.react)
           robin.sendMessage(from, { react: { text: cmd.react, key: mek.key } });
@@ -266,8 +274,8 @@ async function connectToWA() {
             isGroup,
             sender,
             senderNumber,
-            botNumber2,
             botNumber,
+            botJid,
             pushname,
             isMe,
             isOwner,
@@ -284,6 +292,8 @@ async function connectToWA() {
         }
       }
     }
+
+    // Passive listeners
     events.commands.map(async (command) => {
       if (body && command.on === "body") {
         command.function(robin, mek, m, {
@@ -298,8 +308,8 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
           botNumber,
+          botJid,
           pushname,
           isMe,
           isOwner,
@@ -324,8 +334,8 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
           botNumber,
+          botJid,
           pushname,
           isMe,
           isOwner,
@@ -337,10 +347,7 @@ async function connectToWA() {
           isAdmins,
           reply,
         });
-      } else if (
-        (command.on === "image" || command.on === "photo") &&
-        mek.type === "imageMessage"
-      ) {
+      } else if ((command.on === "image" || command.on === "photo") && mek.type === "imageMessage") {
         command.function(robin, mek, m, {
           from,
           l,
@@ -353,8 +360,8 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
           botNumber,
+          botJid,
           pushname,
           isMe,
           isOwner,
@@ -379,8 +386,8 @@ async function connectToWA() {
           isGroup,
           sender,
           senderNumber,
-          botNumber2,
           botNumber,
+          botJid,
           pushname,
           isMe,
           isOwner,
@@ -394,15 +401,15 @@ async function connectToWA() {
         });
       }
     });
-    //============================================================================
   });
 }
+
 app.get("/", (req, res) => {
   res.send("hey, 💟༺°•𝓟𝙸κ𝒪•°ᴮᵒˢˢ°༻🔝-BOT started✅");
 });
-app.listen(port, () =>
-  console.log(`Server listening on port http://localhost:${port}`)
-);
+
+app.listen(port, () => console.log(`Server listening on port http://localhost:${port}`));
+
 setTimeout(() => {
   connectToWA();
 }, 4000);
