@@ -90,7 +90,7 @@ async (robin, mek, m, { from, isGroup, isOwner, reply }) => {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
 
         // Check if the user is the bot owner
-        if (!isOwnergr) return reply("⚠️ Only For Owner");
+        if (!isOwner) return reply("⚠️ Only For Owner");
         // Leave the group
         await robin.groupLeave(from);
 
