@@ -14,8 +14,7 @@ async (robin, mek, m, { from, sender, isOwner, isGroup, isBotAdmins, reply }) =>
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
 
         // Bot must be admin to remove users
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin for this command to work!");
-
+        
         if (isOwner) {
             // Owner: Bot leaves group
             await robin.groupLeave(from);
