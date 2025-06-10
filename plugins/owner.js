@@ -181,7 +181,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, args }) => 
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-
+        if (!isOwner) return reply("⚠️ Only For Owner");
         
         // Ensure a phone number or user ID is provided
         if (!args[0]) return reply("⚠️ Please provide the phone number of the user to add!");
