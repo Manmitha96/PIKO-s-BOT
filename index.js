@@ -147,7 +147,7 @@ async function connectToWA() {
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;
-    const senderNumber = sender.split("@")[0];
+    const senderNumber = (sender.split("@")[0] || "").replace(/\D/g, "");
     const botNumber = robin.user.id.split(":")[0];
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
@@ -161,7 +161,6 @@ async function connectToWA() {
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
     const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
-    const isOwnergr = isGroup ? groupMetadata.owner === sender : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
