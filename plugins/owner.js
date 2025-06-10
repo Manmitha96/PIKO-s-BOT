@@ -84,7 +84,7 @@ cmd({
     category: "main",
     filename: __filename
 },
-async (robin, mek, m, { from, isGroup, isOwnergrp, reply }) => {
+async (robin, mek, m, { from, isGroup, isOwner, reply }) => {
     try {
         // Check if the command is used in a group
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
