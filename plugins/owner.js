@@ -1,17 +1,5 @@
 const { cmd } = require('../command');
 
-async function isBotAdmin(robin, groupId) {
-    try {
-        const metadata = await robin.groupMetadata(groupId);
-        const botId = robin.user.id.split(':')[0] + '@s.whatsapp.net';
-        const botAdmin = metadata.participants.find(p => p.id === botId)?.admin;
-        return !!botAdmin;
-    } catch (e) {
-        console.error("isBotAdmin Error:", e);
-        return false;
-    }
-}
-
 cmd({
     pattern: "block",
     react: "⚠️",
@@ -60,7 +48,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+        
 
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to kick!");
@@ -125,19 +113,25 @@ cmd({
     category: "main",
     filename: __filename
 },
-async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
+async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
     try {
-        if (!isGroup) return reply("⚠️ Group only!");
-        if (!isAdmins) return reply("⚠️ Admin only!");
+        // Check if the command is used in a group
+        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+
+        // Check if the user is an admin
+        if (!isAdmins) return reply("⚠️ This command is only for group admins!");
+
+        // Check if the bot is an admin
         
-        // Use the helper function
-        const botIsAdmin = await isBotAdmin(robin, from);
-        if (!botIsAdmin) return reply("⚠️ I need admin rights!");
         
-        // Rest of your promote logic...
+        // Set the group to admin-only
+        await robin.groupSettingUpdate(from, "announcement");
+
+        // Confirm the action
+        return reply("✅ Group has been muted. Only admins can send messages now!");
     } catch (e) {
-        console.error("Promote Error:", e);
-        reply(`❌ Error: ${e.message}`);
+        console.error("Mute Error:", e);
+        reply(`❌ Failed to mute the group. Error: ${e.message}`);
     }
 });
 
@@ -158,8 +152,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
-
+        
         // Set the group to everyone can message
         await robin.groupSettingUpdate(from, "not_announcement");
 
@@ -189,8 +182,8 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, args }) => 
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
 
+        
         // Ensure a phone number or user ID is provided
         if (!args[0]) return reply("⚠️ Please provide the phone number of the user to add!");
 
@@ -226,8 +219,8 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
 
+        
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to remove admin privileges from!");
 
@@ -274,7 +267,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+        
 
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to promote to admin!");
