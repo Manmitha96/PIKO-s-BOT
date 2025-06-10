@@ -161,6 +161,7 @@ async function connectToWA() {
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
     const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
+    const isOwnergr = isGroup ? groupMetadata.owner === sender : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
