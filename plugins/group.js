@@ -64,7 +64,7 @@ cmd(
   },
   async (robin, mek, m, { from, isGroup, isAdmin, isBotAdmin, reply }) => {
     if (!isGroup) return reply("This command is only for groups.");
-    if (!isAdmins) return reply("Only group admins can mute the group.");
+    if (!isGroup ? groupAdmins.includes(sender) : false;) return reply("Only group admins can mute the group.");
     await robin.groupSettingUpdate(from, "announcement");
     reply("Group has been muted. Only admins can send messages.");
   }
