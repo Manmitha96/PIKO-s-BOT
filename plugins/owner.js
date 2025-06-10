@@ -1,5 +1,17 @@
 const { cmd } = require('../command');
 
+async function isBotAdmin(robin, groupId) {
+    try {
+        const metadata = await robin.groupMetadata(groupId);
+        const botId = robin.user.id.split(':')[0] + '@s.whatsapp.net';
+        const botAdmin = metadata.participants.find(p => p.id === botId)?.admin;
+        return !!botAdmin;
+    } catch (e) {
+        console.error("isBotAdmin Error:", e);
+        return false;
+    }
+}
+
 cmd({
     pattern: "block",
     react: "⚠️",
@@ -115,30 +127,19 @@ cmd({
 },
 async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
     try {
-        if (!isGroup) return reply("⚠️ This command can only be used in a group!");
-        if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
-
-        // Check if bot is admin
+        if (!isGroup) return reply("⚠️ Group only!");
+        if (!isAdmins) return reply("⚠️ Admin only!");
+        
+        // Use the helper function
         const botIsAdmin = await isBotAdmin(robin, from);
-        if (!botIsAdmin) return reply("⚠️ I need to be an admin to execute this command!");
-
-        if (!quoted) return reply("⚠️ Please reply to the user's message you want to promote to admin!");
-
-        const target = quoted.sender;
-        const metadata = await robin.groupMetadata(from);
-        const groupAdmins = metadata.participants.filter(p => p.admin).map(p => p.id);
-
-        if (groupAdmins.includes(target)) {
-            return reply("⚠️ The mentioned user is already an admin!");
-        }
-
-        await robin.groupParticipantsUpdate(from, [target], "promote");
-        return reply(`✅ Successfully promoted @${target.split('@')[0]} to admin!`);
+        if (!botIsAdmin) return reply("⚠️ I need admin rights!");
+        
+        // Rest of your promote logic...
     } catch (e) {
-        console.error("Promote Admin Error:", e);
-        reply(`❌ Failed to promote the user. Error: ${e.message}`);
+        console.error("Promote Error:", e);
+        reply(`❌ Error: ${e.message}`);
     }
-})
+});
 
 cmd({
     pattern: "unmute",
