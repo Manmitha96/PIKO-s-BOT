@@ -122,7 +122,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ I need to be an admin to execute this command!");
+        
 
         // Set the group to admin-only
         await robin.groupSettingUpdate(from, "announcement");
