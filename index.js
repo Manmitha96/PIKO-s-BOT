@@ -147,11 +147,11 @@ async function connectToWA() {
     const sender = mek.key.fromMe
       ? robin.user.id.split(":")[0] + "@s.whatsapp.net" || robin.user.id
       : mek.key.participant || mek.key.remoteJid;
-    const senderNumber = (sender.split("@")[0] || "").replace(/\D/g, "");
+    const senderNumber = sender.split("@")[0];
     const botNumber = robin.user.id.split(":")[0];
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
-    const isOwner = ownerNumber.includes(senderNumber) || isMe;
+    const isOwner = ownerNumber.includes(sender) || isMe;
     const botNumber2 = await jidNormalizedUser(robin.user.id);
     const groupMetadata = isGroup
       ? await robin.groupMetadata(from).catch((e) => {})
