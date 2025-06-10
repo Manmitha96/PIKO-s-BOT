@@ -113,27 +113,32 @@ cmd({
     category: "main",
     filename: __filename
 },
-async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
+async (robin, mek, m, { from, isGroup, isAdmins, reply, quoted }) => {
     try {
-        // Check if the command is used in a group
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
+        if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
-        // Check if the user is an admin
-        if (!isBotAdmins) return reply("⚠️ I NEED ADMIN PLS!");
+        // Check if bot is admin
+        const botIsAdmin = await isBotAdmin(robin, from);
+        if (!botIsAdmin) return reply("⚠️ I need to be an admin to execute this command!");
 
-        // Check if the bot is an admin
-        if (!isAdmins) return reply("⚠️ This command is only for group admins!");
+        if (!quoted) return reply("⚠️ Please reply to the user's message you want to promote to admin!");
 
-        // Set the group to admin-only
-        await robin.groupSettingUpdate(from, "announcement");
+        const target = quoted.sender;
+        const metadata = await robin.groupMetadata(from);
+        const groupAdmins = metadata.participants.filter(p => p.admin).map(p => p.id);
 
-        // Confirm the action
-        return reply("✅ Group has been muted. Only admins can send messages now!");
+        if (groupAdmins.includes(target)) {
+            return reply("⚠️ The mentioned user is already an admin!");
+        }
+
+        await robin.groupParticipantsUpdate(from, [target], "promote");
+        return reply(`✅ Successfully promoted @${target.split('@')[0]} to admin!`);
     } catch (e) {
-        console.error("Mute Error:", e);
-        reply(`❌ Failed to mute the group. Error: ${e.message}`);
+        console.error("Promote Admin Error:", e);
+        reply(`❌ Failed to promote the user. Error: ${e.message}`);
     }
-});
+})
 
 cmd({
     pattern: "unmute",
