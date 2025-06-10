@@ -11,6 +11,7 @@ cmd({
 async (robin, mek, m, { quoted, reply, isOwner }) => {
     try {
         // Check if the user is the bot owner
+        if (!isOwner) return reply("⚠️ Only For Owner");
 
         // Check if the command is used on a quoted message
         if (!quoted) return reply("⚠️ Please reply to the user's message to block them!");
@@ -89,7 +90,7 @@ async (robin, mek, m, { from, isGroup, isOwner, reply }) => {
         if (!isGroup) return reply("⚠️ This command can only be used in a group!");
 
         // Check if the user is the bot owner
-
+        if (!isOwner) return reply("⚠️ Only For Owner");
         // Leave the group
         await robin.groupLeave(from);
 
