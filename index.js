@@ -153,7 +153,10 @@ async function connectToWA() {
     const isMe = botNumber.includes(senderNumber);
     const isOwner = ownerNumber.includes(senderNumber);
     const botNumber2 = await jidNormalizedUser(robin.user.id)
-    const normalizedAdmins = await jidNormalizedUser(groupAdmins);
+    const normalizedAdmins = await Promise.all(
+    groupAdmins.map(jid => jidNormalizedUser(jid))
+    );
+
     const groupMetadata = isGroup
       ? await robin.groupMetadata(from).catch((e) => {})
       : "";
