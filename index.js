@@ -159,7 +159,9 @@ async function connectToWA() {
     const groupName = isGroup ? groupMetadata.subject : "";
     const participants = isGroup ? await groupMetadata.participants : "";
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
+    const isBotAdmins = isGroup 
+    ? groupAdmins.some(admin => admin.includes(botNumber2.split('@')[0])) 
+    : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
@@ -168,6 +170,7 @@ async function connectToWA() {
 
     console.log("botNumber2:", botNumber2);
     console.log("groupAdmins:", groupAdmins);
+    console.log("Bot Admin Status:", isBotAdmins);
 
     robin.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
       let mime = "";
