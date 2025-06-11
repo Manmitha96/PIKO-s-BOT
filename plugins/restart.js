@@ -12,6 +12,13 @@ async(conn, mek, m,{
     from, quoted, body, isCmd, command, args, q, isGroup, sender, senderNumber, botNumber2, botNumber, pushname, isMe, isOwner, groupMetadata, groupName, participants, groupAdmins, isBotAdmins, isAdmins, reply
 }) => {
     try {
+
+         // 🔍 ADD THIS DEBUG HERE TOO:
+        console.log('🔧 RESTART PLUGIN DEBUG:');
+        console.log('Is Owner in Plugin:', isOwner);
+        console.log('Sender Number:', senderNumber);
+        console.log('Is Group:', isGroup);
+        
         if (!isOwner) {
             return reply("*Only the bot owner can use this command.🕋*");
         }
