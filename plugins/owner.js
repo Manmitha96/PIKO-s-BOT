@@ -48,7 +48,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
 
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to kick!");
@@ -93,7 +93,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
         // Check if the bot is an admin
-        
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
         
         // Set the group to admin-only
         await robin.groupSettingUpdate(from, "announcement");
@@ -123,6 +123,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply }) => {
         if (!isAdmins) return reply("⚠️ This command is only for group admins!");
 
         // Check if the bot is an admin
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
         
         // Set the group to everyone can message
         await robin.groupSettingUpdate(from, "not_announcement");
@@ -153,7 +154,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, args }) => 
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To!");
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
         
         // Ensure a phone number or user ID is provided
         if (!args[0]) return reply("⚠️ Please provide the phone number of the user to add!");
@@ -190,7 +191,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
         
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to remove admin privileges from!");
@@ -238,7 +239,7 @@ async (robin, mek, m, { from, isGroup, isAdmins, isBotAdmins, reply, quoted }) =
         if (!isAdmins) return reply("⚠️ Only group admins can use this command!");
 
         // Check if the bot is an admin
-        
+        if (!isBotAdmins) return reply("⚠️ Bot Need Admin To Do it!");
 
         // Ensure a user is mentioned
         if (!quoted) return reply("⚠️ Please reply to the user's message you want to promote to admin!");
