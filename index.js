@@ -151,16 +151,33 @@ async function connectToWA() {
     const botNumber = robin.user.id.split(":")[0];
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
-    const isOwner = ownerNumber.includes(senderNumber) || isMe;
     const botNumber2 = await jidNormalizedUser(robin.user.id);
+
+    // Fixed group metadata handling with proper error handling
     const groupMetadata = isGroup
-      ? await robin.groupMetadata(from).catch((e) => {})
+      ? await robin.groupMetadata(from).catch((e) => {
+          console.log("Error getting group metadata:", e);
+          return null;
+        })
       : "";
-    const groupName = isGroup ? groupMetadata.subject : "";
-    const participants = isGroup ? await groupMetadata.participants : "";
-    const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
+
+    const groupName = isGroup && groupMetadata ? groupMetadata.subject : "";
+    const participants = isGroup && groupMetadata ? groupMetadata.participants : [];
+
+    // Use the imported getGroupAdmins function from your lib/functions
+    const groupAdmins = isGroup && participants.length > 0 ? await getGroupAdmins(participants) : [];
+
+    // Fixed bot admin check
     const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
+
+    // Fixed user admin check
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
+
+    // Fixed owner check - handle both string and array formats
+    const isOwner = Array.isArray(ownerNumber) 
+      ? ownerNumber.includes(senderNumber) || isMe
+      : ownerNumber === senderNumber || senderNumber.includes(ownerNumber) || isMe;
+
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
