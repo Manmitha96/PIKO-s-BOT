@@ -153,7 +153,7 @@ async function connectToWA() {
     const isMe = botNumber.includes(senderNumber);
     const isOwner = ownerNumber.includes(senderNumber);
     const botNumber2 = await jidNormalizedUser(robin.user.id)
-    const normalizedAdmins = groupAdmins.map(admin => jidNormalizedUser(admin));
+    const normalizedAdmins = await jidNormalizedUser(groupAdmins);
     const groupMetadata = isGroup
       ? await robin.groupMetadata(from).catch((e) => {})
       : "";
@@ -169,8 +169,8 @@ async function connectToWA() {
 
     console.log("botNumber2:", botNumber2);
     console.log("groupAdmins:", groupAdmins);
+    console.log("groupAdmins:", normalizedAdmins);
     console.log("Bot Admin Status:", isBotAdmins);
-    console.log("Admin List:", groupAdmins.map(admin => jidNormalizedUser(admin)));
 
     robin.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
       let mime = "";
