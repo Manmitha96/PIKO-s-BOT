@@ -174,9 +174,34 @@ async function connectToWA() {
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
 
     // Fixed owner check - handle both string and array formats
-    const isOwner = Array.isArray(ownerNumber) 
-      ? ownerNumber.includes(senderNumber) || isMe
-      : ownerNumber === senderNumber || senderNumber.includes(ownerNumber) || isMe;
+    const isOwner = (() => {
+  if (isMe) return true;
+  
+  const cleanSender = senderNumber.replace(/[^\d]/g, '');
+  
+  if (Array.isArray(ownerNumber)) {
+    return ownerNumber.some(num => {
+      const cleanOwner = num.toString().replace(/[^\d]/g, '');
+      return cleanOwner === cleanSender;
+    });
+  }
+  
+  const cleanOwner = ownerNumber.toString().replace(/[^\d]/g, '');
+  return cleanOwner === cleanSender;
+})();
+
+    // 🔍 ADD DEBUG CODE RIGHT AFTER isOwner - ADD THESE LINES:
+console.log('=============== DEBUG START ===============');
+console.log('🔍 Owner Number from config:', ownerNumber);
+console.log('🔍 Sender Number:', senderNumber);
+console.log('🔍 Is Group:', isGroup);
+console.log('🔍 Is Owner Result:', isOwner);
+console.log('🔍 Is Me (bot):', isMe);
+console.log('🔍 From (chat ID):', from);
+console.log('🔍 Push Name:', pushname);
+console.log('🔍 Bot Number:', botNumber);
+console.log('🔍 Bot Number2:', botNumber2);
+console.log('=============== DEBUG END =================');
 
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
