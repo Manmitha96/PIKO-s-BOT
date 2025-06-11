@@ -159,9 +159,7 @@ async function connectToWA() {
     const groupName = isGroup ? groupMetadata.subject : "";
     const participants = isGroup ? await groupMetadata.participants : "";
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    const normalizedBotNumber2 = normalizeLidJid(botNumber2);
-    const normalizedGroupAdmins = groupAdmins.map(normalizeLidJid);
-    const isBotAdmins = isGroup ? normalizedGroupAdmins.includes(normalizedBotNumber2) : false;
+    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
