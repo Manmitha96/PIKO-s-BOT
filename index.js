@@ -152,7 +152,7 @@ async function connectToWA() {
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
     const isOwner = ownerNumber.includes(senderNumber);
-    const botNumber2 = await jidNormalizedUser(robin.user.id);
+    const botNumber2 = robin.user.id.split('@')[0] + '@lid';
     const groupMetadata = isGroup
       ? await robin.groupMetadata(from).catch((e) => {})
       : "";
