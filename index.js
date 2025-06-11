@@ -166,6 +166,9 @@ async function connectToWA() {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
     };
 
+    console.log("botNumber2:", botNumber2);
+    console.log("groupAdmins:", groupAdmins);
+
     robin.sendFileUrl = async (jid, url, caption, quoted, options = {}) => {
       let mime = "";
       let res = await axios.head(url);
