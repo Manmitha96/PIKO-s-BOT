@@ -7,7 +7,7 @@ function convertToBool(text, fault = "true") {
 }
 module.exports = {
   SESSION_ID: process.env.SESSION_ID || "OQ4xDAyB#cwefJ-TCRJB64Q4SEu-aXn4gFzpuLKwazX_JNdYyIaM",
-  OWNER_NUM: process.env.OWNER_NUM || "94726939427",
+  OWNER_NUM: process.env.OWNER_NUM || "94726939427,75227023323273",
   PREFIX: process.env.PREFIX || ".",
   ALIVE_IMG: process.env.ALIVE_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
   ALIVE_MSG: process.env.ALIVE_MSG || "Hello , I am alive now!!\n\n*☯️OWNED BY P_I_K_O☯️*",
