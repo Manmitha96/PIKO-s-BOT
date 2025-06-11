@@ -177,19 +177,6 @@ async function connectToWA() {
     const isOwner = (() => {
   if (isMe) return true;
   
-  const cleanSender = senderNumber.replace(/[^\d]/g, '');
-  
-  if (Array.isArray(ownerNumber)) {
-    return ownerNumber.some(num => {
-      const cleanOwner = num.toString().replace(/[^\d]/g, '');
-      return cleanOwner === cleanSender;
-    });
-  }
-  
-  const cleanOwner = ownerNumber.toString().replace(/[^\d]/g, '');
-  return cleanOwner === cleanSender;
-})();
-
     // 🔍 ADD DEBUG CODE RIGHT AFTER isOwner - ADD THESE LINES:
 console.log('=============== DEBUG START ===============');
 console.log('🔍 Owner Number from config:', ownerNumber);
