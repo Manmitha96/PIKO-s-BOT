@@ -10,7 +10,7 @@ cmd({
     react: "🤖",
     filename: __filename
 },
-async (conn, mek, m, { from, isOwner, reply }) => {
+async (robin, mek, m, { from, isOwner, reply }) => {
     if (!isOwner) return reply("❌ You are not the owner!");
-    reply(`🤖 *Bot JID:* ${conn.user.jid}`);
+    reply(`🤖 *Bot JID:* ${robin.user.jid}`);
 });
