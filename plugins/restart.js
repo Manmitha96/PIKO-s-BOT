@@ -24,7 +24,7 @@ async(conn, mek, m,{
         }
 
         // 🔁 Random Emoji
-        const emojis = ['🔄', '📡', '♻️', '🔌'];
+        const emojis = ["🔄,📡,♻️,🔌"];
         const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
 
         // 💤 Inform user and restart
