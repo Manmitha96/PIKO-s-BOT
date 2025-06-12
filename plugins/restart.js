@@ -22,8 +22,14 @@ async(conn, mek, m,{
         if (!isOwner) {
             return reply("*Only the bot owner can use this command.🕋*");
         }
+
+        // 🔁 Random Emoji
+        const emojis = ['🔄', '📡, '♻️', '🔌'];
+        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+
+        // 💤 Inform user and restart
         const {exec} = require("child_process")
-        reply("*restarting...*")
+        reply(`*${randomEmoji} Restarting Bot...*`);
         await sleep(1500)
         exec("pm2 restart all")
     } catch(e) {
