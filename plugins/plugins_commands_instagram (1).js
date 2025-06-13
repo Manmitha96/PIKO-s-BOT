@@ -1,11 +1,13 @@
 const { cmd } = require("../command");
-const instagramGetUrl = require("instagram-url-direct");
+// Replace with a real Instagram downloader package or API
+const { getInstaVideoInfo } = require("instagram-url-direct");
 
 cmd(
   {
-    pattern: "ig",
-    react: "📷",
-    desc: "Download Instagram Video, Reel, or Post",
+    pattern: "insta",
+    alias: ["instagram", "ig"],
+    react: "📸",
+    desc: "Download Instagram Video",
     category: "download",
     filename: __filename,
   },
@@ -13,46 +15,76 @@ cmd(
     robin,
     mek,
     m,
-    { from, quoted, q, reply }
+    {
+      from,
+      quoted,
+      body,
+      isCmd,
+      command,
+      args,
+      q,
+      isGroup,
+      sender,
+      senderNumber,
+      botNumber2,
+      botNumber,
+      pushname,
+      isMe,
+      isOwner,
+      groupMetadata,
+      groupName,
+      participants,
+      groupAdmins,
+      isBotAdmins,
+      isAdmins,
+      reply,
+    }
   ) => {
     try {
-      if (!q) return reply("*Provide an Instagram post/reel/video link.* 💜");
+      if (!q) return reply("*Please provide a valid Instagram video URL!* ❌");
 
-      // Get download links using instagram-url-direct
-      const results = await instagramGetUrl(q);
+      // Validate the Instagram URL format
+      const instaRegex = /(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(p|reel|tv)\/[A-Za-z0-9_\-]+/;
+      if (!instaRegex.test(q))
+        return reply("*Invalid Instagram URL! Please check and try again.* ❌");
 
-      if (!results.ok || !results.url_list || results.url_list.length === 0) {
-        return reply("❌ Failed to fetch media. Make sure the Instagram link is correct and public.");
+      reply("*Downloading your video...* ⏳💖");
+
+      const result = await getInstaVideoInfo(q);
+
+      if (!result || !result.url) {
+        return reply("*Failed to download video. Please try again later.* 🌚");
       }
 
-      // Send each media file (video/photo)
-      for (let i = 0; i < results.url_list.length; i++) {
-        const url = results.url_list[i].url;
-        const type = results.url_list[i].type; // "video" or "image"
-        const caption =
-          i === 0
-            ? `📮 *Instagram Downloader*\n${results.url_list.length} file(s)\n\n𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`
-            : undefined;
+      // Prepare and send the message with video details
+      let desc = `*💟 PIKO INSTA VIDEO DOWNLOADER 💜*
 
-        if (type === "video") {
-          await robin.sendMessage(
-            from,
-            { video: { url }, caption },
-            { quoted: mek }
-          );
-        } else {
-          await robin.sendMessage(
-            from,
-            { image: { url }, caption },
-            { quoted: mek }
-          );
-        }
-      }
+👑 *Type*: ${result.type || "Video"}
+📸 *User*: ${result.username || "Unknown"}
 
-      reply("*Sent Instagram media!* 💙");
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
+      `;
+      await robin.sendMessage(
+        from,
+        {
+          image: {
+            url: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
+          },
+          caption: desc,
+        },
+        { quoted: mek }
+      );
+
+      await robin.sendMessage(
+        from,
+        { video: { url: result.url }, caption: "*----------INSTA VIDEO----------*" },
+        { quoted: mek }
+      );
+
+      return reply("*UPLOAD COMPLETED* ✅");
     } catch (e) {
       console.error(e);
-      reply(`❌ Error: ${e.message}`);
+      reply(`*Error:* ${e.message || e}`);
     }
   }
 );
