@@ -19,7 +19,7 @@ cmd(
       if (!q) return reply("*Provide an Instagram post/reel/video link.* 💜");
 
       // You can replace this API endpoint if you have a better one!
-      const apiUrl = `https://igdl-api.com/api/instagram?url=${encodeURIComponent(q)}`;
+      const apiUrl = `https://saveig.app/api/ajaxSearch?url=${encodeURIComponent(q)}`;
 
       const { data } = await axios.get(apiUrl);
 
