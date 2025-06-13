@@ -3,7 +3,7 @@ const axios = require("axios");
 
 cmd(
   {
-    pattern: "instagram",
+    pattern: "ig",
     react: "📸",
     desc: "Download Instagram Post, Reel, or Video",
     category: "download",
