@@ -1,5 +1,5 @@
 const { cmd } = require("../command");
-const { Configuration, OpenAIApi } = require("openai");
+const { OpenAI } = require("openai");
 const config = require('../config');
 
 const OPENAI_API_KEY = config.OPENAI_API_KEY;
@@ -26,7 +26,7 @@ cmd(
       const configuration = new Configuration({
         apiKey: process.env.OPENAI_API_KEY,
       });
-      const openai = new OpenAIApi(configuration);
+      const openai = new OpenAI(configuration);
 
       const res = await openai.createImage({
         prompt: q,
