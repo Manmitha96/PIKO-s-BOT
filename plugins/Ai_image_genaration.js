@@ -6,7 +6,7 @@ const config = require("../config");
 console.log("Loaded OpenAI API Key:", config.OPENAI_API_KEY); // ✅ Add this for debugging
 
 const openai = new OpenAI({
-  apiKey: config.OPENAI_API_KEY,
+  apiKey: "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",
 });
 
 cmd(
