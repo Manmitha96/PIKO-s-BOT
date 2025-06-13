@@ -1,10 +1,10 @@
 const { cmd } = require("../command");
 const OpenAI = require("openai");
-const { fetchJson } = require('../lib/functions');               
+const { fetchJson } = require('../lib/functions');
 const config = require("../config");
 
 const openai = new OpenAI({
-  apiKey: config.OPENAI_API_KEY, // ✅ pulled from config.js
+  apiKey: config.OPENAI_API_KEY,
 });
 
 cmd(
@@ -19,11 +19,11 @@ cmd(
   async (robin, mek, m, { from, q, reply }) => {
     if (!q) {
       return reply(
-        "*Please provide a prompt.* 🎨\nExample: .imggen a dreamy landscape at sunset"
+        "*Please provide a prompt.* 🎨\nExample: .imggen a cyberpunk city at night"
       );
     }
 
-    reply("🧠 *Generating your image... This may take 10–20 seconds.*");
+    reply("🧠 *Generating your image... Please wait.*");
 
     try {
       const res = await openai.images.generate({
@@ -38,7 +38,7 @@ cmd(
         from,
         {
           image: { url: imageUrl },
-          caption: `🎨 *Prompt:* ${q}\nPowered by DALL·E`,
+          caption: `🎨 *Prompt:* ${q}\nGenerated with DALL·E`,
         },
         { quoted: mek }
       );
