@@ -3,6 +3,8 @@ const OpenAI = require("openai");
 const { fetchJson } = require('../lib/functions');
 const config = require("../config");
 
+console.log("Loaded OpenAI API Key:", config.OPENAI_API_KEY); // ✅ Add this for debugging
+
 const openai = new OpenAI({
   apiKey: config.OPENAI_API_KEY,
 });
