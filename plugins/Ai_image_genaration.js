@@ -1,6 +1,8 @@
 const { cmd } = require("../command");
 const { Configuration, OpenAIApi } = require("openai");
-require('dotenv').config(); // Load .env variables
+const config = require('../config');
+
+const OPENAI_API_KEY = config.OPENAI_API_KEY;
 
 cmd(
   {
