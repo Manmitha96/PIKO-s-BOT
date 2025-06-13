@@ -1,6 +1,5 @@
 const { cmd } = require("../command");
-// Replace with a real Instagram downloader package or API
-const { getInstaVideoInfo } = require("instagram-url-direct");
+const { instagram } = require("instagram-url-direct");
 
 cmd(
   {
@@ -15,76 +14,56 @@ cmd(
     robin,
     mek,
     m,
-    {
-      from,
-      quoted,
-      body,
-      isCmd,
-      command,
-      args,
-      q,
-      isGroup,
-      sender,
-      senderNumber,
-      botNumber2,
-      botNumber,
-      pushname,
-      isMe,
-      isOwner,
-      groupMetadata,
-      groupName,
-      participants,
-      groupAdmins,
-      isBotAdmins,
-      isAdmins,
-      reply,
-    }
+    { from, q, reply }
   ) => {
     try {
       if (!q) return reply("*Please provide a valid Instagram video URL!* ❌");
 
-      // Validate the Instagram URL format
-      const instaRegex = /(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\/(p|reel|tv)\/[A-Za-z0-9_\-]+/;
-      if (!instaRegex.test(q))
+      const instaRegex = /(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/(p|reel|tv)\/[A-Za-z0-9_\-]+/;
+      if (!instaRegex.test(q.trim()))
         return reply("*Invalid Instagram URL! Please check and try again.* ❌");
 
-      reply("*Downloading your video...* ⏳💖");
+      reply("*🔄 Fetching video... Please wait!*");
 
-      const result = await getInstaVideoInfo(q);
+      const result = await instagram(q.trim());
 
-      if (!result || !result.url) {
-        return reply("*Failed to download video. Please try again later.* 🌚");
+      if (!result || !result.url_list || result.url_list.length === 0) {
+        return reply("*⚠️ Failed to retrieve video. Please try again later.*");
       }
 
-      // Prepare and send the message with video details
-      let desc = `*💟 PIKO INSTA VIDEO DOWNLOADER 💜*
+      const videoUrl = result.url_list[0]; // Usually first item is the main video
+
+      const caption = `*💟 PIKO INSTA VIDEO DOWNLOADER 💜*
 
 👑 *Type*: ${result.type || "Video"}
 📸 *User*: ${result.username || "Unknown"}
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*
-      `;
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*`;
+
       await robin.sendMessage(
         from,
         {
           image: {
             url: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
           },
-          caption: desc,
+          caption,
         },
         { quoted: mek }
       );
 
       await robin.sendMessage(
         from,
-        { video: { url: result.url }, caption: "*----------INSTA VIDEO----------*" },
+        {
+          video: { url: videoUrl },
+          caption: "*----------INSTA VIDEO----------*",
+        },
         { quoted: mek }
       );
 
-      return reply("*UPLOAD COMPLETED* ✅");
+      return reply("*✅ Upload completed successfully!*");
     } catch (e) {
-      console.error(e);
-      reply(`*Error:* ${e.message || e}`);
+      console.error("Instagram download error:", e);
+      reply(`*❌ Error:* ${e.message || e}`);
     }
   }
 );
