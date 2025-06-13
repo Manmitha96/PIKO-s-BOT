@@ -1,8 +1,11 @@
 const { cmd } = require("../command");
-const { OpenAI } = require("openai");
-const config = require('../config');
+const OpenAI = require("openai");
+const { fetchJson } = require('../lib/functions');               
+const config = require("../config");
 
-const OPENAI_API_KEY = config.OPENAI_API_KEY;
+const openai = new OpenAI({
+  apiKey: config.OPENAI_API_KEY, // ✅ pulled from config.js
+});
 
 cmd(
   {
@@ -23,18 +26,13 @@ cmd(
     reply("🧠 *Generating your image... This may take 10–20 seconds.*");
 
     try {
-      const configuration = new Configuration({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-      const openai = new OpenAI(configuration);
-
-      const res = await openai.createImage({
+      const res = await openai.images.generate({
         prompt: q,
         n: 1,
         size: "1024x1024",
       });
 
-      const imageUrl = res.data.data[0].url;
+      const imageUrl = res.data[0].url;
 
       await robin.sendMessage(
         from,
