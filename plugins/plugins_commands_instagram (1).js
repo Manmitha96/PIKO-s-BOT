@@ -1,5 +1,5 @@
 const { cmd } = require("../command");
-const { instagram } = require("instagram-url-direct");
+const instagram = require("instagram-url-direct");
 
 cmd(
   {
@@ -31,7 +31,7 @@ cmd(
         return reply("*⚠️ Failed to retrieve video. Please try again later.*");
       }
 
-      const videoUrl = result.url_list[0]; // Usually first item is the main video
+      const videoUrl = result.url_list[0];
 
       const caption = `*💟 PIKO INSTA VIDEO DOWNLOADER 💜*
 
