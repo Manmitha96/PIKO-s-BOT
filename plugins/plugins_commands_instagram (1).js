@@ -1,5 +1,5 @@
 const { cmd } = require("../command");
-const instagram = require("instagram-url-direct");
+const axios = require("axios");
 
 cmd(
   {
@@ -23,20 +23,25 @@ cmd(
       if (!instaRegex.test(q.trim()))
         return reply("*Invalid Instagram URL! Please check and try again.* ❌");
 
-      reply("*🔄 Fetching video... Please wait!*");
+      reply("*🔄 Downloading from Instagram... Please wait!*");
 
-      const result = await instagram(q.trim());
+      // Using SL Code Lords API
+      const res = await axios.get(
+        `https://api.sl-code-lords.xyz/api/ig/download?url=${encodeURIComponent(q)}&apikey=slc_01`
+      );
 
-      if (!result || !result.url_list || result.url_list.length === 0) {
+      const data = res.data;
+
+      if (!data || !data.url || data.url.length === 0) {
         return reply("*⚠️ Failed to retrieve video. Please try again later.*");
       }
 
-      const videoUrl = result.url_list[0];
+      const videoUrl = data.url[0];
 
       const caption = `*💟 PIKO INSTA VIDEO DOWNLOADER 💜*
 
-👑 *Type*: ${result.type || "Video"}
-📸 *User*: ${result.username || "Unknown"}
+👑 *Type*: ${data.type || "Video"}
+📸 *User*: ${data.author || "Unknown"}
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O*`;
 
@@ -62,8 +67,8 @@ cmd(
 
       return reply("*✅ Upload completed successfully!*");
     } catch (e) {
-      console.error("Instagram download error:", e);
-      reply(`*❌ Error:* ${e.message || e}`);
+      console.error("Instagram download error:", e.response?.data || e.message);
+      reply(`*❌ Error:* ${e.response?.data?.message || e.message || "Unknown error"}`);
     }
   }
 );
