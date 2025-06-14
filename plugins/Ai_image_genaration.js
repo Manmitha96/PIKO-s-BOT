@@ -15,8 +15,14 @@ cmd(
     category: "ai",
     filename: __filename,
   },
-  async (conn, m, text, { reply }) => {
-    if (!text) return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
+  const prompt = typeof text === "string" ? text : (text?.text || "");
+  if (!prompt) return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
+
+const res = await openai.images.generate({
+  prompt,
+  n: 1,
+  size: "1024x1024"
+});
 
     try {
       await reply("🎨 Generating image... please wait...");
