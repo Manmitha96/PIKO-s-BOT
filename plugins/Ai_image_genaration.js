@@ -15,22 +15,20 @@ cmd(
     category: "ai",
     filename: __filename,
   },
-  const prompt = typeof text === "string" ? text : (text?.text || "");
-  if (!prompt) return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
-
-const res = await openai.images.generate({
-  prompt,
-  n: 1,
-  size: "1024x1024"
-});
+  async (conn, m, text, { reply }) => { // <-- function begins here
+    const prompt = typeof text === "string" ? text : (text?.text || "");
+    if (!prompt) {
+      return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
+    }
 
     try {
       await reply("🎨 Generating image... please wait...");
 
-      console.log("Prompt type:", typeof text, "Prompt value:", text);
+      // Debug log
+      console.log("Prompt type:", typeof prompt, "Prompt value:", prompt);
 
       const res = await openai.images.generate({
-        prompt: text,
+        prompt,
         n: 1,
         size: "1024x1024"
       });
@@ -39,7 +37,7 @@ const res = await openai.images.generate({
       const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       const buffer = Buffer.from(response.data, "binary");
 
-      await conn.sendMessage(m.chat, { image: buffer, caption: `🖼️ Prompt: ${text}` }, { quoted: m });
+      await conn.sendMessage(m.chat, { image: buffer, caption: `🖼️ Prompt: ${prompt}` }, { quoted: m });
 
     } catch (err) {
       console.error("❌ DALL·E error:", err.response?.data || err.message);
