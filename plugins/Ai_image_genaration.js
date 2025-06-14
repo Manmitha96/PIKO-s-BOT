@@ -11,8 +11,15 @@ cmd(
     filename: __filename,
   },
   async (conn, m, text) => {
-    const prompt = text?.trim() || m?.body?.replace(/^\.?imagine\s+/i, "").trim();
-    if (!prompt) return await m.reply("Example: .imagine a cute cat");
+    // Robust prompt extraction
+    let prompt = "";
+    if (m && m.body) {
+      prompt = m.body.replace(/^\.?imagine\s*/i, "").trim();
+    } else if (typeof text === "string") {
+      prompt = text.trim();
+    }
+
+    if (!prompt) return await m.reply("❌ Please provide a prompt.\nExample: `.imagine a cute cat`");
 
     await m.reply("🔄 Generating image (Free DeepAI Model)...");
 
@@ -21,30 +28,38 @@ cmd(
       const { data } = await axios.post(
         "https://api.deepai.org/api/text2img",
         { text: prompt },
-        { headers: { "api-key": config.DEEPAI_API_KEY } }
+        { 
+          headers: { "api-key": config.DEEPAI_API_KEY },
+          timeout: 30000 // 30-second timeout
+        }
       );
 
-      // Download and send image
-      const imageBuffer = (await axios.get(data.output_url, { 
-        responseType: "arraybuffer" 
-      })).data;
+      if (!data.output_url) throw new Error("No image URL returned");
+
+      // Download with timeout
+      const imageResponse = await axios.get(data.output_url, {
+        responseType: "arraybuffer",
+        timeout: 15000 // 15-second timeout
+      });
 
       await conn.sendMessage(
         m.chat,
         { 
-          image: Buffer.from(imageBuffer), 
+          image: Buffer.from(imageResponse.data),
           caption: `🎨 ${prompt}\n(Generated via DeepAI)` 
         },
         { quoted: m }
       );
 
     } catch (err) {
-      console.error("DeepAI Error:", err.response?.data || err);
-      await m.reply(
-        err.response?.data?.detail?.includes("limit") 
-          ? "❌ Free monthly quota exhausted (50 images)"
-          : "❌ Error: " + (err.message || "Check console")
-      );
+      console.error("DeepAI Error:", err.response?.data || err.message);
+      let errorMsg = "❌ Error generating image";
+      if (err.response?.status === 403) {
+        errorMsg = "❌ Free monthly quota exhausted (50 images)";
+      } else if (err.message.includes("timeout")) {
+        errorMsg = "❌ Server took too long to respond";
+      }
+      await m.reply(errorMsg);
     }
   }
 );
