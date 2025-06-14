@@ -4,78 +4,74 @@ const config = require("../config");
 
 cmd(
     {
-        pattern: "dalle",
-        alias: ["aiimg", "draw", "genimage", "dalle3"],
+        pattern: "draw",
+        alias: ["dalle", "abstract"],
         react: "🎨",
-        desc: "Generate AI images using DALL·E 3",
-        usage: ".dalle <prompt> [--hd] [--size=1024x1024|1024x1792|1792x1024]",
+        desc: "Generate abstract or conceptual AI art",
+        usage: ".draw <concept> [--style=artistic|photographic|painting]",
         category: "ai",
         filename: __filename,
     },
     async (robin, mek, m, { from, q, reply }) => {
         try {
-            // --- Input Validation ---
             if (!q) {
-                return reply(`🎨 *DALL·E 3 Image Generator*\n\n` +
-                    `📝 *Example:* .dalle a cat astronaut wearing sunglasses\n` +
-                    `⚙️ *Options:*\n` +
-                    `--hd : Higher quality (2x cost)\n` +
-                    `--size=1024x1792 : Portrait orientation`);
+                return reply(`🎨 *Abstract Art Generator*\n\n` +
+                    `📝 *Examples:*\n` +
+                    `.draw freedom and open road --style=artistic\n` +
+                    `.draw futuristic city at night --style=photographic\n` +
+                    `.draw emotional landscape --style=painting`);
             }
 
             if (!config.OPENAI_API_KEY) {
-                return reply("❌ OpenAI API key is not configured");
+                return reply("❌ API key not configured");
             }
 
-            // --- Parse Options ---
-            let prompt = q;
-            let quality = "standard";
-            let size = "1024x1024";
-
-            // Extract --hd flag
-            if (prompt.includes("--hd")) {
-                quality = "hd";
-                prompt = prompt.replace("--hd", "").trim();
-            }
-
-            // Extract size parameter
-            const sizeMatch = prompt.match(/--size=(\d+x\d+)/);
-            if (sizeMatch) {
-                const validSizes = ["1024x1024", "1024x1792", "1792x1024"];
-                if (validSizes.includes(sizeMatch[1])) {
-                    size = sizeMatch[1];
-                    prompt = prompt.replace(sizeMatch[0], "").trim();
-                } else {
-                    return reply("❌ Invalid size. Use: 1024x1024, 1024x1792, or 1792x1024");
+            // Parse style option
+            let style = "artistic";
+            const styleMatch = q.match(/--style=(\w+)/);
+            if (styleMatch) {
+                const validStyles = ["artistic", "photographic", "painting"];
+                if (validStyles.includes(styleMatch[1])) {
+                    style = styleMatch[1];
+                    q = q.replace(styleMatch[0], "").trim();
                 }
             }
 
-            // Validate prompt
-            if (prompt.length > 400) {
-                return reply("❌ Prompt too long (max 400 characters)");
+            // Transform abstract concepts into more concrete prompts
+            const promptEnhancements = {
+                "freedom and open road": `An ${style} interpretation of freedom: winding road through majestic mountains, ` +
+                                         `golden sunlight filtering through trees, vibrant colors blending together, ` +
+                                         `sense of endless possibility, dynamic brushstrokes`,
+                "emotional landscape": `A ${style} landscape that evokes deep emotion, with dramatic lighting and ` +
+                                      `expressive color palette, conveying a powerful mood`,
+                "abstract concept": `A ${style} composition using shapes and colors to represent the idea, ` +
+                                   `with visual metaphors and symbolic elements`
+            };
+
+            let finalPrompt = q;
+            for (const [concept, enhancement] of Object.entries(promptEnhancements)) {
+                if (q.toLowerCase().includes(concept)) {
+                    finalPrompt = enhancement;
+                    break;
+                }
             }
 
-            // --- Content Moderation ---
-            const blockedTerms = ["nude", "sexual", "violence", "gore", "hate"];
-            const containsBlocked = blockedTerms.some(term => 
-                prompt.toLowerCase().includes(term)
-            );
-            
-            if (containsBlocked) {
-                return reply("⚠️ This prompt may violate content policies. Please try something else.");
+            // Ensure prompt isn't too abstract
+            if (finalPrompt === q && q.split(" ").length < 5) {
+                return reply("⚠️ *Too abstract!* Try adding more descriptive details\n" +
+                            "Example: Instead of 'freedom', try 'open road through mountains at sunset'");
             }
 
-            // --- API Request ---
-            const processingMsg = await reply("🔄 Creating your artwork...");
+            const processingMsg = await reply(`🔄 Creating your ${style} interpretation...`);
 
             const response = await axios.post(
                 "https://api.openai.com/v1/images/generations",
                 {
                     model: "dall-e-3",
-                    prompt: prompt,
+                    prompt: `${finalPrompt}. ${style} style, highly detailed, visually striking composition`,
                     n: 1,
-                    size: size,
-                    quality: quality,
+                    size: "1024x1024",
+                    quality: "standard",
                     response_format: "b64_json"
                 },
                 {
@@ -87,55 +83,34 @@ cmd(
                 }
             );
 
-            // --- Handle Response ---
-            if (!response.data.data || !response.data.data[0].b64_json) {
-                throw new Error("Invalid API response format");
-            }
-
             const imageBuffer = Buffer.from(response.data.data[0].b64_json, 'base64');
-
+            
             await robin.sendMessage(
                 from,
                 {
                     image: imageBuffer,
-                    caption: `🎨 *Generated Image*\n` +
-                            `📝 "${prompt}"\n` +
-                            `⚙️ ${quality.toUpperCase()} ${size}`
+                    caption: `🎨 *Generated Artwork*\n` +
+                            `📝 "${q}"\n` +
+                            `🎭 Style: ${style.charAt(0).toUpperCase() + style.slice(1)}`
                 },
                 { quoted: mek }
             );
 
-            // Clean up processing message
             await robin.sendMessage(from, { delete: processingMsg.key });
 
         } catch (error) {
-            console.error("DALL·E Error:", error.response?.data || error.message);
-
-            let userMessage = "❌ Failed to generate image";
-            const errorData = error.response?.data?.error || {};
-
-            // Handle specific error cases
-            if (errorData.type === 'image_generation_user_error') {
-                userMessage = "⚠️ DALL·E couldn't generate this image\n" +
-                             "Possible reasons:\n" +
-                             "• Content policy violation\n" +
-                             "• Overly abstract/vague prompt\n" +
-                             "• Technical limitations";
-            } 
-            else if (error.response?.status === 429) {
-                userMessage = "⏳ Too many requests - Please try again later";
+            console.error("Art Generation Error:", error.response?.data || error.message);
+            
+            let errorMsg = "❌ Couldn't create artwork";
+            if (error.response?.data?.error?.type === 'image_generation_user_error') {
+                errorMsg = "⚠️ DALL·E struggled with this concept\n" +
+                           "Try:\n" +
+                           "1. Adding more concrete details\n" +
+                           "2. Using a different style (--style=photographic)\n" +
+                           "3. Breaking the concept into simpler elements";
             }
-            else if (error.code === 'ECONNABORTED') {
-                userMessage = "⌛ Request timed out - Try again";
-            }
-            else if (error.message.includes("ENOTFOUND")) {
-                userMessage = "🌐 Network error - Check your connection";
-            }
-            else if (error.response?.status === 401) {
-                userMessage = "🔑 Invalid API key - Check your configuration";
-            }
-
-            reply(`${userMessage}\n\n💡 *Tip:* Try making your prompt more specific`);
+            
+            reply(errorMsg);
         }
     }
 );
