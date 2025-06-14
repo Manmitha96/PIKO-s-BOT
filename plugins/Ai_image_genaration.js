@@ -27,6 +27,8 @@ const res = await openai.images.generate({
     try {
       await reply("🎨 Generating image... please wait...");
 
+      console.log("Prompt type:", typeof text, "Prompt value:", text);
+
       const res = await openai.images.generate({
         prompt: text,
         n: 1,
