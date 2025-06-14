@@ -59,6 +59,9 @@ cmd(
           { headers: { Authorization: `Token ${config.REPLICATE_API_KEY}` } }
         );
 
+        .then(res => console.log("✅ Key works!"))
+        .catch(err => console.log("❌ Invalid key:", err.response.data));
+
         if (statusResponse.data.status === "succeeded") {
           imageUrl = statusResponse.data.output[0];
           break;
