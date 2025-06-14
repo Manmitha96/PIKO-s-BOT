@@ -6,11 +6,11 @@ const path = require("path");
 
 // --- Configuration ---
 const OPENAI_API_KEY = config.OPENAI_API_KEY;
-const MAX_PROMPT_LENGTH = 400; // DALL·E 3 has a 400 character limit
+const MAX_PROMPT_LENGTH = 400;
 const CACHE_DIR = path.join(__dirname, '../temp/dalle_cache');
-const BANNED_WORDS = ['nude', 'sexual', 'porn', 'violence', 'gore', 'hitler', 'nsfw']; // Add more as needed
+const BANNED_WORDS = ['nude', 'sexual', 'porn', 'violence', 'gore', 'hitler', 'nsfw', 'nazi'];
 
-// Create cache directory if it doesn't exist
+// Create cache directory
 if (!fs.existsSync(CACHE_DIR)) {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
@@ -30,64 +30,61 @@ cmd(
         filename: __filename,
     },
     async (robin, mek, m, { from, q, reply }) => {
-        // --- Input Validation ---
-        if (!q) {
-            const helpText = `🎨 *DALL·E 3 Image Generator*\n\n` +
-                `🔹 *Usage:* \`.dalle <prompt>\`\n` +
-                `🔹 *Options:*\n` +
-                `   --hd - Higher quality (2x credits)\n` +
-                `   --size=1024x1024 (default) | 1024x1792 (portrait) | 1792x1024 (landscape)\n\n` +
-                `📝 *Example:* \`.dalle a futuristic city at sunset --hd --size=1792x1024\``;
-            return reply(helpText);
-        }
-
-        if (!OPENAI_API_KEY) {
-            return reply("❌ *OpenAI API key is missing!* Add it in config.js.");
-        }
-
-        // --- Parse Options ---
-        const options = {
-            quality: "standard",
-            size: "1024x1024"
-        };
-
-        // Check for HD flag
-        if (q.includes("--hd")) {
-            options.quality = "hd";
-            q = q.replace("--hd", "").trim();
-        }
-
-        // Check for size parameter
-        const sizeMatch = q.match(/--size=(\d+x\d+)/);
-        if (sizeMatch) {
-            const validSizes = ["1024x1024", "1024x1792", "1792x1024"];
-            if (validSizes.includes(sizeMatch[1])) {
-                options.size = sizeMatch[1];
-            } else {
-                return reply(`❌ Invalid size! Valid options: ${validSizes.join(", ")}`);
-            }
-            q = q.replace(sizeMatch[0], "").trim();
-        }
-
-        // Validate prompt length
-        if (q.length > MAX_PROMPT_LENGTH) {
-            return reply(`❌ Prompt too long! Maximum ${MAX_PROMPT_LENGTH} characters. Your prompt has ${q.length} characters.`);
-        }
-
-        // Check for banned words
-        const lowerPrompt = q.toLowerCase();
-        const foundBannedWord = BANNED_WORDS.find(word => lowerPrompt.includes(word));
-        if (foundBannedWord) {
-            return reply(`⚠️ *Content warning:* Your prompt contains "${foundBannedWord}" which violates content policies. Please try a different prompt.`);
-        }
-
-        // --- Generate Image ---
         try {
-            const processingMsg = await reply(`🎨 *Generating your DALL·E 3 image...*\n` +
-                `📝 *Prompt:* ${q}\n` +
-                `⚙️ *Settings:* ${options.quality.toUpperCase()} quality, ${options.size} size`);
+            // --- Input Validation ---
+            if (!q) {
+                return reply(`🎨 *DALL·E 3 Image Generator*\n\n` +
+                    `🔹 *Usage:* \`.dalle <prompt>\`\n` +
+                    `🔹 *Options:*\n` +
+                    `   --hd - Higher quality\n` +
+                    `   --size=1024x1024 | 1024x1792 | 1792x1024\n\n` +
+                    `📝 *Example:* \`.dalle a cat astronaut --hd --size=1024x1792\``);
+            }
 
-            // Call DALL·E 3 API
+            if (!OPENAI_API_KEY) {
+                return reply("❌ *API key missing!* Configure OPENAI_API_KEY in config.js");
+            }
+
+            // --- Parse Options ---
+            const options = {
+                quality: "standard",
+                size: "1024x1024"
+            };
+
+            // Handle flags
+            if (q.includes("--hd")) {
+                options.quality = "hd";
+                q = q.replace("--hd", "").trim();
+            }
+
+            const sizeMatch = q.match(/--size=(\d+x\d+)/);
+            if (sizeMatch) {
+                const validSizes = ["1024x1024", "1024x1792", "1792x1024"];
+                if (validSizes.includes(sizeMatch[1])) {
+                    options.size = sizeMatch[1];
+                    q = q.replace(sizeMatch[0], "").trim();
+                } else {
+                    return reply(`❌ Invalid size! Use one of: ${validSizes.join(", ")}`);
+                }
+            }
+
+            // Validate prompt
+            if (q.length > MAX_PROMPT_LENGTH) {
+                return reply(`❌ Prompt too long! Max ${MAX_PROMPT_LENGTH} chars.`);
+            }
+
+            // Check for banned content
+            const lowerPrompt = q.toLowerCase();
+            const bannedWord = BANNED_WORDS.find(word => lowerPrompt.includes(word));
+            if (bannedWord) {
+                return reply(`⚠️ *Content blocked:* Prompt contains restricted term "${bannedWord}"`);
+            }
+
+            // --- Generate Image ---
+            const processingMsg = await reply(`🔄 *Generating image...*\n` +
+                `📝: "${q.substring(0, 50)}${q.length > 50 ? '...' : ''}"` +
+                `\n⚙️: ${options.quality.toUpperCase()} ${options.size}`);
+
             const response = await axios.post(
                 "https://api.openai.com/v1/images/generations",
                 {
@@ -96,74 +93,64 @@ cmd(
                     n: 1,
                     size: options.size,
                     quality: options.quality,
-                    response_format: "b64_json" // Get image as base64 to avoid URL expiration
+                    response_format: "b64_json"
                 },
                 {
                     headers: {
                         "Authorization": `Bearer ${OPENAI_API_KEY}`,
                         "Content-Type": "application/json",
                     },
-                    timeout: 30000 // 30 seconds timeout
+                    timeout: 45000
                 }
             );
 
-            // Process the image
+            // Process and send image
             const imageData = response.data.data[0].b64_json;
             const imageBuffer = Buffer.from(imageData, 'base64');
-            
-            // Generate a filename with timestamp and first 10 chars of prompt
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const promptPrefix = q.replace(/[^a-z0-9]/gi, '_').substring(0, 10);
-            const filename = `dalle_${promptPrefix}_${timestamp}.png`;
-            const filePath = path.join(CACHE_DIR, filename);
-            
-            // Save to cache (optional)
-            fs.writeFileSync(filePath, imageBuffer);
 
-            // Send the image with detailed caption
             await robin.sendMessage(
                 from,
                 {
                     image: imageBuffer,
-                    caption: `🖼️ *DALL·E 3 Generated Image*\n\n` +
-                        `📝 *Prompt:* ${q}\n` +
-                        `⚙️ *Settings:* ${options.quality.toUpperCase()} quality, ${options.size} size\n` +
-                        `🕒 ${new Date().toLocaleString()}`,
-                    mimetype: 'image/png'
+                    caption: `🎨 *Generated Image*\n` +
+                        `📝: "${q}"\n` +
+                        `⚙️: ${options.quality.toUpperCase()} ${options.size}\n` +
+                        `🕒 ${new Date().toLocaleTimeString()}`
                 },
                 { quoted: mek }
             );
 
-            // Delete the processing message
+            // Clean up
             await robin.sendMessage(from, { delete: processingMsg.key });
 
         } catch (e) {
-            console.error("DALL·E Error:", e.response?.data || e.message);
-            let errorMsg = "❌ *Failed to generate image.*";
+            console.error("DALL·E Generation Error:", e.response?.data || e.message);
+            
+            let errorMsg = "❌ *Image generation failed*";
+            const errorData = e.response?.data?.error || {};
 
-            // Enhanced error handling
-            if (e.response?.data?.error) {
-                const openaiError = e.response.data.error;
-                
-                if (openaiError.type === 'image_generation_user_error') {
-                    errorMsg = "⚠️ *Image generation failed.* The prompt might contain content that DALL·E cannot process.";
-                } else if (openaiError.message?.includes("safety system")) {
-                    errorMsg = "⚠️ *Content policy violation.* Your prompt may contain restricted content.\n\n" +
-                              "Try modifying your prompt to be more generic or less controversial.";
-                } else if (openaiError.message?.includes("billing")) {
-                    errorMsg = "💳 *Billing issue.* The OpenAI account has no credit or payment method.";
-                } else if (openaiError.message?.includes("invalid_size")) {
-                    errorMsg = "📏 *Invalid image size.* Valid sizes: 1024x1024, 1024x1792, or 1792x1024.";
-                } else {
-                    errorMsg = `❌ *OpenAI Error:* ${openaiError.message || openaiError.type || 'Unknown error'}`;
-                }
-            } else if (e.code === 'ECONNABORTED') {
-                errorMsg = "⏳ *Request timeout.* The server took too long to respond. Try again later.";
-            } else if (e.message?.includes("ENOTFOUND")) {
-                errorMsg = "🌐 *Network error.* Could not connect to OpenAI servers.";
+            // Handle specific error types
+            if (errorData.type === 'image_generation_user_error') {
+                errorMsg = "⚠️ *Cannot generate this image*\n" +
+                           "The prompt may:\n" +
+                           "• Contain blocked content\n" +
+                           "• Be too vague\n" +
+                           "• Violate safety policies";
+            } 
+            else if (errorData.code === 'billing_hard_limit_reached') {
+                errorMsg = "💳 *API limit reached*\nCheck your OpenAI account billing";
+            }
+            else if (e.code === 'ECONNABORTED') {
+                errorMsg = "⏳ *Timeout* - Try again later";
+            }
+            else if (e.message?.includes("ENOTFOUND")) {
+                errorMsg = "🌐 *Network error* - Check your connection";
+            }
+            else if (errorData.message) {
+                errorMsg = `❌ OpenAI Error: ${errorData.message}`;
             }
 
-            reply(errorMsg);
+            reply(errorMsg + "\n\n💡 *Tip:* Try rephrasing your prompt");
         }
     }
 );
