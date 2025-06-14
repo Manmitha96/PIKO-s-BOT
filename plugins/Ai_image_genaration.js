@@ -1,51 +1,44 @@
 const { cmd } = require("../command");
+const { Configuration, OpenAIApi } = require("openai");
 const axios = require("axios");
+const fs = require("fs");
+const configKey = require("../config"); // import your config.js
+
+const configuration = new Configuration({
+  apiKey: config.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 cmd(
   {
     pattern: "imagine",
     react: "🎨",
-    desc: "Generate AI Image",
+    desc: "Generate AI image using DALL·E",
     category: "ai",
     filename: __filename,
   },
-  async (
-    robin,
-    mek,
-    m,
-    {
-      from,
-      q,
-      reply,
-    }
-  ) => {
+  async (conn, m, text, { reply }) => {
+    if (!text) return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
+
     try {
-      if (!q) return reply("*🖌️ Please enter a prompt to generate an image.*\nExample: .imagine a cyberpunk city at night 🌃");
+      await reply("🎨 Generating image... please wait...");
 
-      reply("🎨 *Generating image... please wait...*");
+      const res = await openai.createImage({
+        prompt: text,
+        n: 1,
+        size: "1024x1024",
+        response_format: "url",
+      });
 
-      // Use Lexica API or another free SD proxy
-      const apiUrl = `https://lexica.art/api/v1/search?q=${encodeURIComponent(q)}`;
-      const res = await axios.get(apiUrl);
-      const images = res.data.images;
+      const imageUrl = res.data.data[0].url;
+      const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+      const buffer = Buffer.from(response.data, "binary");
 
-      if (!images || images.length === 0) {
-        return reply("❌ No image found. Try a different prompt.");
-      }
+      await conn.sendMessage(m.chat, { image: buffer, caption: `🖼️ Prompt: ${text}` }, { quoted: m });
 
-      const img = images[0].src;
-
-      await robin.sendMessage(
-        from,
-        {
-          image: { url: img },
-          caption: `🎨 *Prompt:* ${q}\n🪄 *Made by PIKO AI*`,
-        },
-        { quoted: mek }
-      );
     } catch (err) {
-      console.error(err);
-      reply("❌ Error generating image.");
+      console.error("❌ DALL·E error:", err.message);
+      reply("❌ Error generating image. Try again later.");
     }
   }
 );
