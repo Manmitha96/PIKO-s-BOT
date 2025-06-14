@@ -2,7 +2,7 @@ const { cmd } = require("../command");
 const { Configuration, OpenAIApi } = require("openai");
 const axios = require("axios");
 const fs = require("fs");
-const configKey = require("../config"); // import your config.js
+const config = require("../config"); // fixed import name
 
 const configuration = new Configuration({
   apiKey: config.OPENAI_API_KEY,
@@ -37,8 +37,8 @@ cmd(
       await conn.sendMessage(m.chat, { image: buffer, caption: `🖼️ Prompt: ${text}` }, { quoted: m });
 
     } catch (err) {
-      console.error("❌ DALL·E error:", err.message);
-      reply("❌ Error generating image. Try again later.");
+      console.error("❌ DALL·E error:", err.response?.data || err.message);
+      reply("❌ Error generating image. Please try again later.");
     }
   }
 );
