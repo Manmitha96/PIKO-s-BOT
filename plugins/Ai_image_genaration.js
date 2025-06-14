@@ -33,11 +33,11 @@ cmd(
       await reply("🎨 Generating image... please wait...");
 
       const res = await openai.images.generate({
-      model: "dall-e-3", // or "dall-e-2"
-      prompt: prompt,
-      n: 1,
-      size: "1024x1024"
-    });
+        model: "dall-e-2", // <--- IMPORTANT
+        prompt,
+        n: 1,
+        size: "1024x1024"
+      });
 
       const imageUrl = res.data[0].url;
       const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
