@@ -15,17 +15,22 @@ cmd(
     category: "ai",
     filename: __filename,
   },
-  async (conn, m, text, { reply }) => { // <-- function begins here
-    const prompt = typeof text === "string" ? text : (text?.text || "");
+  async (conn, m, text, { reply }) => {
+    let prompt = "";
+    if (typeof text === "string" && text.trim()) {
+      prompt = text.trim();
+    } else if (m && m.body) {
+      prompt = m.body.replace(/^(\.imagine|imagine)\s*/i, "").trim();
+    }
+
+    console.log("Prompt:", prompt);
+
     if (!prompt) {
       return reply("❌ Please provide a prompt.\n*Example:* `.imagine a dragon flying over a volcano`");
     }
 
     try {
       await reply("🎨 Generating image... please wait...");
-
-      // Debug log
-      console.log("Prompt type:", typeof prompt, "Prompt value:", prompt);
 
       const res = await openai.images.generate({
         prompt,
