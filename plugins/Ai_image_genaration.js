@@ -1,13 +1,11 @@
 const { cmd } = require("../command");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 const axios = require("axios");
-const fs = require("fs");
-const config = require("../config"); // fixed import name
+const config = require("../config");
 
-const configuration = new Configuration({
-  apiKey: config.OPENAI_API_KEY,
+const openai = new OpenAI({
+  apiKey: config.OPENAI_API_KEY
 });
-const openai = new OpenAIApi(configuration);
 
 cmd(
   {
@@ -23,14 +21,13 @@ cmd(
     try {
       await reply("🎨 Generating image... please wait...");
 
-      const res = await openai.createImage({
+      const res = await openai.images.generate({
         prompt: text,
         n: 1,
-        size: "1024x1024",
-        response_format: "url",
+        size: "1024x1024"
       });
 
-      const imageUrl = res.data.data[0].url;
+      const imageUrl = res.data[0].url;
       const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
       const buffer = Buffer.from(response.data, "binary");
 
