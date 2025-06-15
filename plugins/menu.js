@@ -37,6 +37,8 @@ cmd(
 6. 🔎 Search Commands
 7. 🧚🏻 Anime Commands
 8. 💫 Fun Commands
+9. 🤖 Ai Commands
+10.🎲 Other Commands
 
 *_Reply with a number e.g.( .1 ) to view the commands in that category._*
 
