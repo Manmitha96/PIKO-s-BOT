@@ -30,10 +30,10 @@ cmd(
 
 1. ▪️.alive
 2. ▪️.menu
-3. ▪️.ai <text>
-4. ▪️.gemini <text>
-5. ▪️.system
-6. ▪️.ping
+3. ▪️.ping
+4. ▪️.system
+5. ▪️.Coming soon
+6. ▪️.Coming soon
 7. ▪️.Coming soon
 
 *_Reply with a command to use that category._*
