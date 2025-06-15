@@ -3,7 +3,7 @@ const axios = require("axios");
 
 cmd(
   {
-    pattern: "aivideo",
+    pattern: "aivideoframes",
     react: "🎬",
     desc: "Generate AI Video from text prompt",
     category: "ai",
@@ -106,7 +106,7 @@ cmd(
 // More reliable GIF-style animation
 cmd(
   {
-    pattern: "aigif",
+    pattern: "aigifframes",
     react: "🎭",
     desc: "Generate AI animated sequence from text prompt",
     category: "ai",
