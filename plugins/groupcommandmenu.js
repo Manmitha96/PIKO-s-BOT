@@ -31,7 +31,7 @@ cmd(
 1. ▪️.kick
 2. ▪️.mute
 3. ▪️.unmute
-4. ▪️..add <+94 xxxxxxxxx>
+4. ▪️.add <+94 xxxxxxxxx>
 5. ▪️.left
 6. ▪️.demote
 7. ▪️.promote
