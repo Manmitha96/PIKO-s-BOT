@@ -28,12 +28,12 @@ cmd(
 
 🤖 *AI COMMANDS:*
 
-1. ▪️.imagine <text>(Ai Photo)
-2. ▪️.aivideoframes <text>
-3. ▪️.aigifframes
+1. ▪️.ai <text>
+2. ▪️.imagine <text>(Ai Photo)
+3. ▪️.aivideoframes <text>
 4. ▪️.aislideshow
 5. ▪️.vidpreview
-6. ▪️.Coming soon
+6. ▪️.aigifframes
 7. ▪️.Coming soon
 
 *_Reply with a command to download that category._*
