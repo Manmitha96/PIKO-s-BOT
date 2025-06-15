@@ -3,6 +3,7 @@
 const { cmd } = require("../command");
 const config = require("../config");
 const os = require("os");
+const {runtime} = require('../lib/functions')
 
 // Temporary state storage
 let menuReplyState = {};
@@ -24,7 +25,7 @@ cmd(
 
       let madeMenu = `👋 *Hello ${pushname}*
 
-🕐 *Uptime:* ${uptime} minutes
+🕐 *Uptime:* ${runtime(process.uptime())}
 📦 *RAM Usage:* ${ramUsage}
 
 📍 *Select a Category by replying with a number:*
