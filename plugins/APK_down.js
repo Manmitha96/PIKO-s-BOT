@@ -10,45 +10,46 @@ cmd(
     category: "download",
     filename: __filename,
   },
-  async (
-    robin,
-    mek,
-    m,
-    { from, quoted, body, isCmd, command, args, q, isGroup, sender, reply }
-  ) => {
+  async (robin, mek, m, { from, reply, q }) => {
     try {
       if (!q) return reply("*Please provide an app name to search.* 📱💜");
 
-      // Search for the app on APKPure
-      const searchUrl = `https://apkpure.com/search?q=${encodeURIComponent(q)}`;
-      const searchResponse = await axios.get(searchUrl);
-      const $ = cheerio.load(searchResponse.data);
+      // First try with direct scraping
+      try {
+        const searchUrl = `https://apkpure.com/search?q=${encodeURIComponent(q)}`;
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+        };
 
-      // Get the first search result
-      const firstResult = $(".search-title:first").find("a").first();
-      if (!firstResult.length) {
-        return reply("*No results found for your query.* 😢");
-      }
+        const searchResponse = await axios.get(searchUrl, { headers });
+        const $ = cheerio.load(searchResponse.data);
 
-      const appName = firstResult.text().trim();
-      const appUrl = `https://apkpure.com${firstResult.attr("href")}/download`;
+        const firstResult = $(".search-title:first").find("a").first();
+        if (!firstResult.length) {
+          return reply("*No results found for your query.* 😢");
+        }
 
-      // Fetch the download page
-      const appResponse = await axios.get(appUrl);
-      const $$ = cheerio.load(appResponse.data);
+        const appName = firstResult.text().trim();
+        const appUrl = `https://apkpure.com${firstResult.attr("href")}/download`;
 
-      // Get download link and version info
-      const downloadLink = $$(".download-btn:first").attr("href");
-      const version = $$(".details-sdk:first").text().trim();
-      const size = $$(".details-size:first").text().trim();
-      const updateDate = $$(".details-update:first").text().trim();
+        // Fetch the download page
+        const appResponse = await axios.get(appUrl, { headers });
+        const $$ = cheerio.load(appResponse.data);
 
-      if (!downloadLink) {
-        return reply("*Failed to get download link for this app.* ❌");
-      }
+        // Get download link and version info
+        const downloadLink = $$(".download-btn:first").attr("href");
+        const version = $$(".details-sdk:first").text().trim();
+        const size = $$(".details-size:first").text().trim();
+        const updateDate = $$(".details-update:first").text().trim();
 
-      // Construct the response message
-      const message = `📱 *APK Downloader* 📱
+        if (!downloadLink) {
+          return reply("*Failed to get download link for this app.* ❌");
+        }
+
+        // Construct the response message
+        const message = `📱 *APK Downloader* 📱
 
 🔍 *App Name*: ${appName}
 🔄 *Version*: ${version}
@@ -61,12 +62,50 @@ cmd(
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
 
-      // Send the app information with download link
-      await robin.sendMessage(
-        from,
-        { text: message },
-        { quoted: mek }
-      );
+        return reply(message);
+
+      } catch (directError) {
+        console.log("Direct scraping failed, trying alternative method...");
+        
+        // Fallback to alternative APK download site
+        const alternativeUrl = `https://dlandroid.com/?s=${encodeURIComponent(q)}`;
+        const headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        };
+
+        const altResponse = await axios.get(alternativeUrl, { headers });
+        const $ = cheerio.load(altResponse.data);
+
+        const firstResult = $(".post-title:first").find("a").first();
+        if (!firstResult.length) {
+          return reply("*No results found on alternative site.* 😢");
+        }
+
+        const appName = firstResult.text().trim();
+        const appPageUrl = firstResult.attr("href");
+
+        // Fetch the app page
+        const appPageResponse = await axios.get(appPageUrl, { headers });
+        const $$ = cheerio.load(appPageResponse.data);
+
+        // Find download link
+        const downloadLink = $$("a[href*='download?hash=']").first().attr("href");
+
+        if (!downloadLink) {
+          return reply("*Failed to get download link from alternative site.* ❌");
+        }
+
+        const message = `📱 *APK Downloader (Alternative)* 📱
+
+🔍 *App Name*: ${appName}
+⬇️ *Download Link*: ${downloadLink}
+
+⚠️ *Note*: Download APK files at your own risk. Make sure to scan for viruses before installing.
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+        return reply(message);
+      }
 
     } catch (e) {
       console.error(e);
