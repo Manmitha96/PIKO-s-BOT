@@ -29,101 +29,159 @@ cmd(
 
       await reply("*Downloading your Instagram content...* 📸⏳");
 
-      // Method 1: Try primary API
+      // Clean the URL
+      const cleanUrl = q.split('?')[0]; // Remove query parameters
+      
+      // Method 1: Try SaveInsta API
       try {
-        const apiUrl = `https://api.saveig.app/api/v1/get-media-info`;
-        const response = await axios.post(apiUrl, {
-          url: q
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-
-        if (response.data && response.data.data && response.data.data.length > 0) {
-          const mediaData = response.data.data[0];
-          
-          const caption = `📸 *INSTAGRAM DOWNLOADER* 📸
-
-👤 *Username*: @${mediaData.username || 'Unknown'}
-📝 *Caption*: ${mediaData.caption ? mediaData.caption.substring(0, 100) + '...' : 'No caption'}
-❤️ *Likes*: ${mediaData.like_count || 'N/A'}
-💬 *Comments*: ${mediaData.comment_count || 'N/A'}
-📅 *Posted*: ${mediaData.taken_at ? new Date(mediaData.taken_at * 1000).toDateString() : 'Unknown'}
-
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
-
-          // Handle different media types
-          if (mediaData.video_url) {
-            // Video content
-            await robin.sendMessage(
-              from,
-              {
-                video: { url: mediaData.video_url },
-                caption: caption
-              },
-              { quoted: mek }
-            );
-          } else if (mediaData.image_url) {
-            // Image content
-            await robin.sendMessage(
-              from,
-              {
-                image: { url: mediaData.image_url },
-                caption: caption
-              },
-              { quoted: mek }
-            );
-          }
-
-          return reply("*Instagram content downloaded successfully!* ✅💜");
-        }
-      } catch (primaryError) {
-        console.log("Primary API failed, trying alternative method...");
-      }
-
-      // Method 2: Alternative scraping method
-      try {
-        const scrapingUrl = `https://www.instasave.website/download-instagram-videos-photos`;
+        const apiUrl = `https://saveinsta.app/core/ajax.php`;
         const formData = new URLSearchParams();
-        formData.append('url', q);
+        formData.append('url', cleanUrl);
+        formData.append('lang', 'en');
 
-        const scrapeResponse = await axios.post(scrapingUrl, formData, {
+        const response = await axios.post(apiUrl, formData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://saveinsta.app/'
+          },
+          timeout: 15000
         });
 
-        const $ = cheerio.load(scrapeResponse.data);
-        const downloadLinks = [];
-
-        // Extract download links
-        $('a[download]').each((i, element) => {
-          const link = $(element).attr('href');
-          const type = $(element).text().toLowerCase().includes('video') ? 'video' : 'image';
-          if (link && link.startsWith('http')) {
-            downloadLinks.push({ url: link, type: type });
-          }
-        });
-
-        if (downloadLinks.length > 0) {
-          const firstMedia = downloadLinks[0];
+        if (response.data && typeof response.data === 'string') {
+          const $ = cheerio.load(response.data);
           
-          const caption = `📸 *INSTAGRAM CONTENT* 📸
+          // Look for download links
+          const videoUrl = $('a[href*=".mp4"]').first().attr('href');
+          const imageUrl = $('a[href*=".jpg"], a[href*=".jpeg"], a[href*=".png"]').first().attr('href');
+          
+          if (videoUrl || imageUrl) {
+            const caption = `📸 *INSTAGRAM DOWNLOADER* 📸
 
-🔗 *Source*: Instagram
-📱 *Type*: ${firstMedia.type.charAt(0).toUpperCase() + firstMedia.type.slice(1)}
+🔗 *Source*: ${cleanUrl}
+📱 *Type*: ${videoUrl ? 'Video/Reel' : 'Image/Photo'}
 ⬇️ *Status*: Successfully downloaded
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
 
-          if (firstMedia.type === 'video') {
+            if (videoUrl) {
+              await robin.sendMessage(
+                from,
+                {
+                  video: { url: videoUrl },
+                  caption: caption
+                },
+                { quoted: mek }
+              );
+            } else if (imageUrl) {
+              await robin.sendMessage(
+                from,
+                {
+                  image: { url: imageUrl },
+                  caption: caption
+                },
+                { quoted: mek }
+              );
+            }
+
+            return reply("*Instagram content downloaded successfully!* ✅💜");
+          }
+        }
+      } catch (method1Error) {
+        console.log("Method 1 failed:", method1Error.message);
+      }
+
+      // Method 2: Try SnapInsta API
+      try {
+        const snapUrl = `https://snapinsta.app/api/ajaxSearch`;
+        const snapData = new URLSearchParams();
+        snapData.append('q', cleanUrl);
+        snapData.append('t', 'media');
+        snapData.append('lang', 'en');
+
+        const snapResponse = await axios.post(snapUrl, snapData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          timeout: 15000
+        });
+
+        if (snapResponse.data && snapResponse.data.data) {
+          const $ = cheerio.load(snapResponse.data.data);
+          
+          const downloadLink = $('.download-items__btn').first().attr('href');
+          const isVideo = $('.download-items__btn').first().text().toLowerCase().includes('video');
+          
+          if (downloadLink) {
+            const caption = `📸 *INSTAGRAM CONTENT* 📸
+
+🔗 *Source*: Instagram ${isVideo ? 'Video' : 'Image'}
+📱 *Method*: SnapInsta
+⬇️ *Status*: Downloaded successfully
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+            if (isVideo) {
+              await robin.sendMessage(
+                from,
+                {
+                  video: { url: downloadLink },
+                  caption: caption
+                },
+                { quoted: mek }
+              );
+            } else {
+              await robin.sendMessage(
+                from,
+                {
+                  image: { url: downloadLink },
+                  caption: caption
+                },
+                { quoted: mek }
+              );
+            }
+
+            return reply("*Content downloaded via SnapInsta!* ✅");
+          }
+        }
+      } catch (method2Error) {
+        console.log("Method 2 failed:", method2Error.message);
+      }
+
+      // Method 3: Try InstaDownloader API
+      try {
+        const instaUrl = `https://instadownloader.co/system/action.php`;
+        const instaData = new URLSearchParams();
+        instaData.append('url', cleanUrl);
+        instaData.append('action', 'post');
+
+        const instaResponse = await axios.post(instaUrl, instaData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          timeout: 15000
+        });
+
+        if (instaResponse.data && instaResponse.data.success) {
+          const mediaUrl = instaResponse.data.url;
+          const mediaType = instaResponse.data.type || 'image';
+          
+          const caption = `📸 *INSTAGRAM DOWNLOAD* 📸
+
+🔗 *Original*: ${cleanUrl}
+📱 *Type*: ${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)}
+⬇️ *Method*: InstaDownloader
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+          if (mediaType.includes('video') || mediaType.includes('mp4')) {
             await robin.sendMessage(
               from,
               {
-                video: { url: firstMedia.url },
+                video: { url: mediaUrl },
                 caption: caption
               },
               { quoted: mek }
@@ -132,30 +190,34 @@ cmd(
             await robin.sendMessage(
               from,
               {
-                image: { url: firstMedia.url },
+                image: { url: mediaUrl },
                 caption: caption
               },
               { quoted: mek }
             );
           }
 
-          return reply("*Content downloaded via alternative method!* ✅");
+          return reply("*Instagram content downloaded!* ✅📸");
         }
-      } catch (alternativeError) {
-        console.log("Alternative method failed, trying third method...");
+      } catch (method3Error) {
+        console.log("Method 3 failed:", method3Error.message);
       }
 
-      // Method 3: Simple direct approach
+      // Method 4: Try direct Instagram oEmbed (for basic info)
       try {
-        const directUrl = `https://api.instagram.com/oembed/?url=${encodeURIComponent(q)}`;
-        const oembedResponse = await axios.get(directUrl);
+        const oembedUrl = `https://api.instagram.com/oembed/?url=${encodeURIComponent(cleanUrl)}`;
+        const oembedResponse = await axios.get(oembedUrl, {
+          timeout: 10000
+        });
         
         if (oembedResponse.data && oembedResponse.data.thumbnail_url) {
-          const caption = `📸 *INSTAGRAM POST* 📸
+          const caption = `📸 *INSTAGRAM POST PREVIEW* 📸
 
 👤 *Author*: ${oembedResponse.data.author_name || 'Unknown'}
 📝 *Title*: ${oembedResponse.data.title || 'Instagram Post'}
-🔗 *URL*: ${q}
+🔗 *URL*: ${cleanUrl}
+
+⚠️ *Note*: This is a preview thumbnail. The original post might be private or require special access.
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
 
@@ -168,18 +230,38 @@ cmd(
             { quoted: mek }
           );
 
-          return reply("*Instagram thumbnail downloaded!* 📸💙");
+          return reply("*Instagram preview downloaded!* 📸💙\n\n*Note: If you need the full quality media, the post might be private or restricted.*");
         }
-      } catch (directError) {
-        console.log("Direct method also failed");
+      } catch (oembedError) {
+        console.log("oEmbed method failed:", oembedError.message);
       }
 
       // If all methods fail
-      throw new Error("Unable to download from this Instagram URL. The post might be private or the URL is invalid.");
+      throw new Error("Unable to download from this Instagram URL");
 
     } catch (e) {
       console.error("Instagram Download Error:", e);
-      reply(`❌ *Error downloading Instagram content:* ${e.message}\n\n*Tips:*\n• Make sure the post is public\n• Check if the URL is correct\n• Try again in a few minutes`);
+      
+      const errorMessage = `❌ *Instagram Download Failed* ❌
+
+🔗 *URL*: ${q}
+
+*Possible reasons:*
+• Post is private or restricted
+• Account is private
+• URL is invalid or expired
+• Instagram has blocked the download
+• Network connectivity issues
+
+*Tips:*
+• Make sure the post is public
+• Check if the URL is complete and correct
+• Try again in a few minutes
+• Use a different Instagram URL
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+      reply(errorMessage);
     }
   }
 );
@@ -207,68 +289,31 @@ cmd(
       
       await reply("*Fetching Instagram stories...* 📱⏳\n*Note: Only public stories can be downloaded*");
 
-      try {
-        // Try to get stories using a story API
-        const storyUrl = `https://api.storysaver.net/api/v1/story/${username}`;
-        const response = await axios.get(storyUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-
-        if (response.data && response.data.stories && response.data.stories.length > 0) {
-          const stories = response.data.stories.slice(0, 5); // Limit to 5 stories
-
-          const caption = `📱 *INSTAGRAM STORIES* 📱
+      // Instagram stories are very restricted and require authentication
+      // This is a placeholder implementation
+      const storyMessage = `📱 *INSTAGRAM STORIES* 📱
 
 👤 *Username*: @${username}
-📊 *Stories Found*: ${stories.length}
-⏰ *Downloaded*: ${new Date().toLocaleString()}
+
+⚠️ *Story Download Limitation*
+
+Instagram stories are heavily protected and require:
+• User authentication
+• Special API access
+• Real-time story availability
+
+*Alternative suggestions:*
+• Use .ig for posts and reels
+• Use .igdp for profile pictures
+• Stories expire after 24 hours
+
+*Available commands:*
+• .ig <post_url> - Download posts/reels
+• .igdp <username> - Download profile picture
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
 
-          await reply(caption);
-
-          // Send each story
-          for (let i = 0; i < stories.length; i++) {
-            const story = stories[i];
-            
-            try {
-              if (story.video_url) {
-                await robin.sendMessage(
-                  from,
-                  {
-                    video: { url: story.video_url },
-                    caption: `📱 *Story ${i + 1}/${stories.length}*\n@${username}`
-                  },
-                  { quoted: mek }
-                );
-              } else if (story.image_url) {
-                await robin.sendMessage(
-                  from,
-                  {
-                    image: { url: story.image_url },
-                    caption: `📱 *Story ${i + 1}/${stories.length}*\n@${username}`
-                  },
-                  { quoted: mek }
-                );
-              }
-              
-              // Small delay between stories
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            } catch (storyError) {
-              console.log(`Failed to send story ${i + 1}:`, storyError.message);
-            }
-          }
-
-          return reply("*Stories downloaded successfully!* ✅📱");
-        }
-      } catch (storyError) {
-        console.log("Story API failed:", storyError.message);
-      }
-
-      // Fallback message
-      reply(`❌ *Unable to fetch stories for @${username}*\n\n*Possible reasons:*\n• Account is private\n• No active stories\n• Username doesn't exist\n• Stories are restricted`);
+      reply(storyMessage);
 
     } catch (e) {
       console.error("Instagram Story Error:", e);
@@ -300,33 +345,28 @@ cmd(
       
       await reply("*Downloading profile picture...* 👤⏳");
 
+      // Method 1: Try InstaDp API
       try {
-        // Method 1: Try profile picture API
-        const dpUrl = `https://api.instagram.com/${username}/?__a=1`;
-        const response = await axios.get(dpUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
+        const dpApiUrl = `https://instadp.com/fullsize/${username}`;
+        
+        // Test if the image exists
+        const testResponse = await axios.head(dpApiUrl, {
+          timeout: 10000
         });
 
-        if (response.data && response.data.graphql && response.data.graphql.user) {
-          const user = response.data.graphql.user;
-          const profilePicUrl = user.profile_pic_url_hd || user.profile_pic_url;
-
+        if (testResponse.status === 200) {
           const caption = `👤 *INSTAGRAM PROFILE PICTURE* 👤
 
 👤 *Username*: @${username}
-📝 *Full Name*: ${user.full_name || 'Not available'}
-👥 *Followers*: ${user.edge_followed_by?.count || 'Private'}
-📸 *Posts*: ${user.edge_owner_to_timeline_media?.count || 'Private'}
-✅ *Verified*: ${user.is_verified ? 'Yes' : 'No'}
+📱 *Quality*: Full Size
+⬇️ *Source*: InstaDp
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
 
           await robin.sendMessage(
             from,
             {
-              image: { url: profilePicUrl },
+              image: { url: dpApiUrl },
               caption: caption
             },
             { quoted: mek }
@@ -334,39 +374,28 @@ cmd(
 
           return reply("*Profile picture downloaded successfully!* ✅👤");
         }
-      } catch (apiError) {
-        console.log("Profile API failed, trying alternative...");
+      } catch (method1Error) {
+        console.log("InstaDp method failed:", method1Error.message);
       }
 
-      // Method 2: Alternative approach
+      // Method 2: Try alternative DP service
       try {
-        const altUrl = `https://www.instagram.com/${username}/`;
-        const response = await axios.get(altUrl, {
+        const altDpUrl = `https://www.picuki.com/profile/${username}`;
+        const response = await axios.get(altDpUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
+          },
+          timeout: 15000
         });
 
         const $ = cheerio.load(response.data);
-        const scriptTags = $('script[type="application/ld+json"]');
-        
-        let profilePicUrl = null;
-        scriptTags.each((i, element) => {
-          try {
-            const jsonData = JSON.parse($(element).html());
-            if (jsonData.image) {
-              profilePicUrl = jsonData.image;
-            }
-          } catch (parseError) {
-            // Continue to next script tag
-          }
-        });
+        const profilePicUrl = $('.profile-avatar img').attr('src');
 
-        if (profilePicUrl) {
+        if (profilePicUrl && profilePicUrl.startsWith('http')) {
           const caption = `👤 *INSTAGRAM PROFILE PICTURE* 👤
 
 👤 *Username*: @${username}
-📱 *Source*: Instagram
+📱 *Source*: Picuki
 ⬇️ *Quality*: High Resolution
 
 𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
@@ -382,20 +411,76 @@ cmd(
 
           return reply("*Profile picture downloaded!* ✅👤");
         }
-      } catch (altError) {
-        console.log("Alternative method failed");
+      } catch (method2Error) {
+        console.log("Picuki method failed:", method2Error.message);
       }
 
-      throw new Error(`Unable to fetch profile picture for @${username}. The account might be private or doesn't exist.`);
+      // Method 3: Try direct Instagram approach
+      try {
+        const instagramUrl = `https://www.instagram.com/${username}/`;
+        const response = await axios.get(instagramUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          timeout: 15000
+        });
+
+        // Look for profile picture in the HTML
+        const profilePicMatch = response.data.match(/"profile_pic_url_hd":"([^"]+)"/);
+        if (profilePicMatch && profilePicMatch[1]) {
+          const profilePicUrl = profilePicMatch[1].replace(/\\u0026/g, '&');
+
+          const caption = `👤 *INSTAGRAM PROFILE PICTURE* 👤
+
+👤 *Username*: @${username}
+📱 *Quality*: HD
+⬇️ *Source*: Instagram Direct
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+          await robin.sendMessage(
+            from,
+            {
+              image: { url: profilePicUrl },
+              caption: caption
+            },
+            { quoted: mek }
+          );
+
+          return reply("*HD Profile picture downloaded!* ✅👤");
+        }
+      } catch (method3Error) {
+        console.log("Direct Instagram method failed:", method3Error.message);
+      }
+
+      throw new Error(`Unable to fetch profile picture for @${username}`);
 
     } catch (e) {
       console.error("Instagram DP Error:", e);
-      reply(`❌ *Error downloading profile picture:* ${e.message}\n\n*Make sure the username is correct and the account is public.*`);
+      
+      const errorMessage = `❌ *Profile Picture Download Failed* ❌
+
+👤 *Username*: @${username}
+
+*Possible reasons:*
+• Account is private
+• Username doesn't exist
+• Profile picture is restricted
+• Network connectivity issues
+
+*Tips:*
+• Make sure the username is correct
+• Check if the account is public
+• Try again in a few minutes
+
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+      reply(errorMessage);
     }
   }
 );
 
-// Instagram Highlights Downloader
+// Instagram Highlights Downloader (Placeholder)
 cmd(
   {
     pattern: "ighighlight",
@@ -416,24 +501,26 @@ cmd(
 
       const username = q.replace('@', '').trim();
       
-      await reply("*Fetching Instagram highlights...* ⭐⏳\n*Note: Only public highlights can be downloaded*");
-
-      // This is a placeholder for highlights functionality
-      // Instagram highlights require more complex authentication
-      reply(`⭐ *INSTAGRAM HIGHLIGHTS* ⭐
+      const highlightMessage = `⭐ *INSTAGRAM HIGHLIGHTS* ⭐
 
 👤 *Username*: @${username}
 
-❌ *Feature Coming Soon!*
+🚧 *Feature Under Development* 🚧
 
-Instagram highlights require special authentication and are more complex to download. This feature will be available in a future update.
+Instagram highlights require:
+• Advanced authentication
+• Special API access
+• Complex story parsing
 
-*Available Instagram commands:*
-• .ig - Download posts/reels/videos
-• .igstory - Download stories  
-• .igdp - Download profile pictures
+*Currently Available:*
+✅ .ig <url> - Download posts/reels/videos
+✅ .igdp <username> - Download profile pictures
+⏳ .igstory <username> - Stories (limited)
+🚧 .ighighlight <username> - Coming soon
 
-𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`);
+𝐌𝐚𝐝𝐞 𝐛𝐲 *P_I_K_O* ☯️`;
+
+      reply(highlightMessage);
 
     } catch (e) {
       console.error("Instagram Highlights Error:", e);
