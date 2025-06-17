@@ -3,7 +3,7 @@ const axios = require("axios");
 const { fetchJson } = require("../lib/functions"); // or replace with axios if you don't have fetchJson
 
 cmd({
-  pattern: "insta ?(.*)",
+  pattern: "insta",
   react: "📸",
   desc: "Download Instagram photos, videos, reels, etc.",
   category: "download",
