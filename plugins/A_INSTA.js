@@ -3,7 +3,7 @@ const { igdl } = require('ruhend-scraper');
 
 cmd(
   {
-    pattern: 'ig',
+    pattern: 'igpost',
     desc: 'Download Instagram image posts only.',
     category: 'download',
     filename: __filename,
