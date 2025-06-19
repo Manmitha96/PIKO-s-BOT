@@ -4,14 +4,14 @@ const { igdl } = require('ruhend-scraper');
 cmd(
   {
     pattern: 'ig',
-    desc: 'Download Instagram videos, images, and carousels.',
+    desc: 'Download Instagram image posts only.',
     category: 'download',
     filename: __filename,
   },
   async (client, m, mek, { q, reply }) => {
     try {
       if (!q || !q.includes("instagram.com")) {
-        return reply('*🚫 Please provide a valid Instagram URL.*');
+        return reply('*🚫 Please provide a valid Instagram post URL.*');
       }
 
       await m.react('⏳');
@@ -21,43 +21,46 @@ cmd(
         result = await igdl(q);
       } catch (err) {
         console.error("Scraper error:", err);
-        return reply('*❌ Failed to fetch data. Instagram may have changed or the link is private.*');
+        return reply('*❌ Failed to fetch data. The link may be private or invalid.*');
       }
 
       const mediaList = result?.data;
       if (!mediaList || mediaList.length === 0) {
-      return reply('*🔍 No media found at this URL.*');
+        return reply('*🔍 No media found at this URL.*');
       }
 
-// 🔧 Filter out duplicates
-const uniqueUrls = new Set();
-const uniqueMedia = [];
+      // Filter unique image URLs only
+      const uniqueUrls = new Set();
+      const imageMedia = [];
 
-for (const media of mediaList) {
-  if (media?.url && !uniqueUrls.has(media.url)) {
-    uniqueUrls.add(media.url);
-    uniqueMedia.push(media);
-  }
-}
+      for (const media of mediaList) {
+        if (media?.url && !uniqueUrls.has(media.url) && !media.url.includes('.mp4')) {
+          uniqueUrls.add(media.url);
+          imageMedia.push(media);
+        }
+      }
 
-await m.react('✅');
+      if (imageMedia.length === 0) {
+        return reply('*🚫 This command only supports Instagram image posts. No images found in the given post.*');
+      }
 
-for (let i = 0; i < uniqueMedia.length; i++) {
-  const media = uniqueMedia[i];
-  const isVideo = media.url.includes('.mp4');
+      await m.react('✅');
 
-  await client.sendMessage(m.chat, {
-    [isVideo ? 'video' : 'image']: { url: media.url },
-    caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_CUDU NONA Bot 🤖_`,
-    fileName: `instagram_media_${i + 1}.${isVideo ? 'mp4' : 'jpg'}`,
-    mimetype: isVideo ? 'video/mp4' : 'image/jpeg'
-  }, { quoted: m });
-}
+      for (let i = 0; i < imageMedia.length; i++) {
+        const media = imageMedia[i];
+
+        await client.sendMessage(m.chat, {
+          image: { url: media.url },
+          caption: `🖼️ *Downloaded Instagram Image*\n_Media ${i + 1} of ${imageMedia.length}_\n_CUDU NONA Bot 🤖_`,
+          fileName: `instagram_image_${i + 1}.jpg`,
+          mimetype: 'image/jpeg'
+        }, { quoted: m });
+      }
 
     } catch (e) {
       console.error("IG command error:", e);
       await m.react('❌');
-      reply('*🚫 Unexpected error occurred while downloading Instagram content.*');
+      reply('*🚫 An unexpected error occurred while downloading Instagram images.*');
     }
   }
 );
