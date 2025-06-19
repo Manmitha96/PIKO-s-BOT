@@ -3,7 +3,7 @@ const { igdl } = require('ruhend-scraper');
   
 cmd(  
   {  
-    pattern: 'ig',  
+    pattern: 'igvideo',  
     desc: 'Download Instagram videos',  
     category: 'download',  
     filename: __filename,  
