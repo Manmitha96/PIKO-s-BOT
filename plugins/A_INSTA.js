@@ -26,23 +26,34 @@ cmd(
 
       const mediaList = result?.data;
       if (!mediaList || mediaList.length === 0) {
-        return reply('*🔍 No media found at this URL.*');
+      return reply('*🔍 No media found at this URL.*');
       }
 
-      await m.react('✅');
-      for (let i = 0; i < mediaList.length; i++) {
-        const media = mediaList[i];
-        if (!media?.url) continue;
+// 🔧 Filter out duplicates
+const uniqueUrls = new Set();
+const uniqueMedia = [];
 
-        const isVideo = media.url.includes('.mp4');
+for (const media of mediaList) {
+  if (media?.url && !uniqueUrls.has(media.url)) {
+    uniqueUrls.add(media.url);
+    uniqueMedia.push(media);
+  }
+}
 
-        await client.sendMessage(m.chat, {
-          [isVideo ? 'video' : 'image']: { url: media.url },
-          caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${mediaList.length}_\n_CUDU NONA Bot 🤖_`,
-          fileName: `instagram_media_${i + 1}.${isVideo ? 'mp4' : 'jpg'}`,
-          mimetype: isVideo ? 'video/mp4' : 'image/jpeg'
-        }, { quoted: m });
-      }
+await m.react('✅');
+
+for (let i = 0; i < uniqueMedia.length; i++) {
+  const media = uniqueMedia[i];
+  const isVideo = media.url.includes('.mp4');
+
+  await client.sendMessage(m.chat, {
+    [isVideo ? 'video' : 'image']: { url: media.url },
+    caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_CUDU NONA Bot 🤖_`,
+    fileName: `instagram_media_${i + 1}.${isVideo ? 'mp4' : 'jpg'}`,
+    mimetype: isVideo ? 'video/mp4' : 'image/jpeg'
+  }, { quoted: m });
+}
+
     } catch (e) {
       console.error("IG command error:", e);
       await m.react('❌');
