@@ -4,49 +4,50 @@ const { igdl } = require('ruhend-scraper');
 cmd(
   {
     pattern: 'ig',
-    desc: 'Download Instagram videos',
+    desc: 'Download Instagram videos, photos, or reels',
     category: 'download',
     filename: __filename,
   },
-  async (
-    client,
-    m,
-    mek,
-    { q, reply }
-  ) => {
+  async (client, m, mek, { q, reply }) => {
     try {
-      if (!q || !q.includes("instagram.com")) {
+      if (!q || !q.includes('instagram.com')) {
         return reply('*🚫 Please provide a valid Instagram URL.*');
       }
 
-      await m.react('⏳');
+      await m.react('🔎');
+
       let result;
       try {
         result = await igdl(q);
       } catch (err) {
-        console.error("Scraper error:", err);
+        console.error('Scraper error:', err);
         return reply('*❌ Failed to fetch data. Instagram may have changed or the link is private.*');
       }
 
       if (!result?.data || result.data.length === 0) {
-        return reply('*🔍 No media found for this link.*');
+        return reply('*🕵️ No media found at this link.*');
       }
 
-      // Try to find the best available resolution
-      const video = result.data.find(v => v.url?.includes("http"));
-      if (!video) {
-        return reply('*⚠️ No downloadable video found.*');
+      await m.react('📤');
+
+      // Send all media (videos/photos) found
+      for (const media of result.data) {
+        const mediaType = media.url.endsWith('.mp4') ? 'video' : 'image';
+        const fileOptions = {
+          caption: `📥 *Downloaded via IG Downloader*\n_CUDU NONA Bot 🤖_`,
+          mimetype: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+          fileName: `instagram_media.${mediaType === 'video' ? 'mp4' : 'jpg'}`
+        };
+
+        await client.sendMessage(m.chat, {
+          [mediaType]: { url: media.url },
+          ...fileOptions
+        }, { quoted: m });
       }
 
       await m.react('✅');
-      await client.sendMessage(m.chat, {
-        video: { url: video.url },
-        caption: '📥 *Downloaded via IG Downloader*\n_CUDU NONA Bot 🤖_',
-        fileName: 'instagram_video.mp4',
-        mimetype: 'video/mp4'
-      }, { quoted: m });
     } catch (e) {
-      console.error("IG command error:", e);
+      console.error('IG command error:', e);
       await m.react('❌');
       reply('*🚫 Unexpected error occurred while downloading.*');
     }
