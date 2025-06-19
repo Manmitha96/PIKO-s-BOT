@@ -59,7 +59,7 @@ cmd(
 
         await client.sendMessage(m.chat, {
           image: { url: media.url },
-          caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_CUDU NONA Bot 🤖_`,
+          caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_PIKO-BOT 🤖_`,
           fileName: `instagram_media_${i + 1}.jpg`,
           mimetype: 'image/jpeg'
         }, { quoted: m });
