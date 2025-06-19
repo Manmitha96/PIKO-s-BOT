@@ -4,7 +4,7 @@ const { igdl } = require('ruhend-scraper');
 cmd(
   {
     pattern: 'ig',
-    desc: 'Download Instagram videos, images, and carousels.',
+    desc: 'Download Instagram image posts only.',
     category: 'download',
     filename: __filename,
   },
@@ -12,6 +12,12 @@ cmd(
     try {
       if (!q || !q.includes("instagram.com")) {
         return reply('*🚫 Please provide a valid Instagram URL.*');
+      }
+
+      // ❌ Reject Reels, Stories, and Highlights
+      const lowerUrl = q.toLowerCase();
+      if (lowerUrl.includes('/reel/') || lowerUrl.includes('/reels/') || lowerUrl.includes('/stories/') || lowerUrl.includes('/highlights/')) {
+        return reply('*🚫 This command only supports Instagram photo posts. Reels, Stories, and Highlights are not allowed.*');
       }
 
       await m.react('⏳');
@@ -46,16 +52,17 @@ cmd(
         const media = uniqueMedia[i];
         const isVideo = media.url.includes('.mp4');
 
-        await client.sendMessage(
-          m.chat,
-          {
-            [isVideo ? 'video' : 'image']: { url: media.url },
-            caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_CUDU NONA Bot 🤖_`,
-            fileName: `instagram_media_${i + 1}.${isVideo ? 'mp4' : 'jpg'}`,
-            mimetype: isVideo ? 'video/mp4' : 'image/jpeg',
-          },
-          { quoted: m }
-        );
+        // 🚫 Reject if media is video
+        if (isVideo) {
+          return reply(`*🚫 This command is only for image posts. Video content like Reels is not supported.*`);
+        }
+
+        await client.sendMessage(m.chat, {
+          image: { url: media.url },
+          caption: `📥 *Downloaded via IG Downloader*\n_Media ${i + 1} of ${uniqueMedia.length}_\n_CUDU NONA Bot 🤖_`,
+          fileName: `instagram_media_${i + 1}.jpg`,
+          mimetype: 'image/jpeg'
+        }, { quoted: m });
       }
 
     } catch (e) {
