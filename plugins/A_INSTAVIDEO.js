@@ -47,7 +47,7 @@ cmd(
       await m.react('✅');
       await client.sendMessage(m.chat, {
         video: { url: video.url },
-        caption: '📥 *Downloaded via IG Downloader*\n_CUDU NONA Bot 🤖_',
+        caption: '📥 *Downloaded via IG Downloader*\n_PIKO-BOT 🤖_',
         fileName: 'instagram_video.mp4',
         mimetype: 'video/mp4'
       }, { quoted: m });
