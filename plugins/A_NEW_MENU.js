@@ -1,136 +1,100 @@
-// plugins/menu.js
-const { cmd } = require("../command");
-const config = require("../config");
-const os = require("os");
+// plugins/menu.js 
+const { cmd } = require("../command"); const config = require("../config");
 
-// Store menu states temporarily
-let menuReplyState = {};
+// In-memory state to track awaiting replies for each user 
+const menuReplyState = {};
 
-cmd(
-  {
-    pattern: "testmenu",
-    alias: ["getmenu"],
-    react: "📜",
-    desc: "Get command list",
-    category: "main",
-    filename: __filename,
-  },
-  async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
-    try {
-      let uptime = (process.uptime() / 60).toFixed(2);
-      let used = process.memoryUsage().heapUsed / 1024 / 1024;
-      let ramUsage = `${Math.round(used * 100) / 100} MB`;
+// 1️⃣ Main menu command
 
-      const madeMenu = `👋 *Hello ${pushname}*  
-🕐 *Uptime:* ${uptime} minutes 
-📦 *RAM Usage:* ${ramUsage}
+cmd( { pattern: "testmenu", alias: ["getmenu"], react: "📜", desc: "Show main command menu", category: "main", filename: __filename, }, async (robin, mek, m, { from, senderNumber, pushname, reply }) => { try { // Calculate uptime & memory usage const uptimeMinutes = (process.uptime() / 60).toFixed(2); const memoryMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
 
-📍 *Select a Category by replying with a number:*
+// Build the menu text
+  const menuText = `👋 *Hello ${pushname}*
 
-1. ⚔️ Main Commands  
-2. 🔮 Download Commands  
-3. 🔐 Group Commands  
-4. 👑 Owner Commands  
-5. 🪄 Convert Commands  
-6. 🔎 Search Commands  
-7. 🧚🏻 Anime Commands  
-8. 💫 Fun Commands  
-9. 🤖 AI Commands  
-10. 🎲 Other Commands  
+🕐 Uptime: ${uptimeMinutes} min 📦 RAM Usage: ${memoryMB} MB
 
-☯️ *Made by P_I_K_O*`;
+📍 Choose a category by replying with its number:
 
-      await robin.sendMessage(
-        from,
-        {
-          image: { url: config.ALIVE_IMG },
-          caption: madeMenu,
-        },
-        { quoted: mek }
-      );
+1. ⚔️ Main Commands
 
-      // Save state to expect a reply
-      menuReplyState[senderNumber] = {
-        expecting: true,
-        timestamp: Date.now(),
-        messageId: mek.key.id,
-      };
-    } catch (e) {
-      console.error(e);
-      reply(`❌ Error: ${e.message}`);
-    }
-  }
-);
 
-// Listen for number replies only IF replying to menu
-cmd(
-  {
-    pattern: "^[0-9]+$",
-    react: "📄",
-    desc: "Handle menu replies",
-    category: "main",
-    filename: __filename,
-    usePrefix: false, // Important: ignore dot (.)
-  },
-  async (robin, mek, m, { senderNumber, reply }) => {
-    const state = menuReplyState[senderNumber];
+2. 🔮 Download Commands
 
-    if (
-      !state ||
-      !state.expecting ||
-      !mek.quoted ||
-      mek.quoted.key.id !== state.messageId
-    ) {
-      return; // Ignore if not reply to menu
-    }
 
-    // Timeout after 2 mins
-    if (Date.now() - state.timestamp > 120000) {
-      delete menuReplyState[senderNumber];
-      return reply("⏰ Menu session expired. Type `.menu` again.");
-    }
+3. 🔐 Group Commands
 
-    const option = parseInt(m.body.trim());
-    let subMenu = "";
 
-    switch (option) {
-      case 1:
-        subMenu = `⚔️ *Main Commands*\n.menu\n.ping\n.owner\n.alive`;
-        break;
-      case 2:
-        subMenu = `🔮 *Download Commands*\n.song [name]\n.video [name]\n.ytmp3 [link]`;
-        break;
-      case 3:
-        subMenu = `🔐 *Group Commands*\n.kick\n.add\n.promote\n.demote`;
-        break;
-      case 4:
-        subMenu = `👑 *Owner Commands*\n.eval\n.shutdown\n.setpp`;
-        break;
-      case 5:
-        subMenu = `🪄 *Convert Commands*\n.sticker\n.photo\n.gif\n.mp3`;
-        break;
-      case 6:
-        subMenu = `🔎 *Search Commands*\n.lyrics\n.image\n.google\n.github`;
-        break;
-      case 7:
-        subMenu = `🧚🏻 *Anime Commands*\n.anime\n.manga\n.waifu`;
-        break;
-      case 8:
-        subMenu = `💫 *Fun Commands*\n.joke\n.truth\n.dare\n.meme`;
-        break;
-      case 9:
-        subMenu = `🤖 *AI Commands*\n.ask [question]\n.imagine [prompt]`;
-        break;
-      case 10:
-        subMenu = `🎲 *Other Commands*\n.calc\n.remind\n.short`;
-        break;
-      default:
-        subMenu = `❌ Invalid option. Type \`.menu\` again.`;
-    }
+4. 👑 Owner Commands
 
-    await reply(subMenu);
-    delete menuReplyState[senderNumber]; // Clear state after reply
-  }
-);
+
+5. 🪄 Convert Commands
+
+
+6. 🔎 Search Commands
+
+
+7. 🧚🏻 Anime Commands
+
+
+8. 💫 Fun Commands
+
+
+9. 🤖 AI Commands
+
+
+10. 🎲 Other Commands
+
+
+
+☯️ ${config.ALIVE_MSG}`;
+
+// Send the menu with an image
+  const sent = await robin.sendMessage(
+    from,
+    { image: { url: config.ALIVE_IMG }, caption: menuText },
+    { quoted: mek }
+  );
+
+  // Record state for reply handling
+  menuReplyState[senderNumber] = {
+    messageId: sent.key.id,
+    timestamp: Date.now(),
+  };
+} catch (err) {
+  console.error('[MENU ERROR]', err);
+  reply(`❌ Failed to send menu: ${err.message}`);
+}
+
+} );
+
+// 2️⃣ Handle numeric replies to main menu cmd( { on: "body",          // Listen to all text messages filename: __filename, // For logging }, async (robin, mek, m, { senderNumber, reply }) => { const state = menuReplyState[senderNumber];
+
+// Must be a reply to a menu message
+if (!state || !mek.quoted || mek.quoted.key.id !== state.messageId) return;
+
+// Expire after 2 minutes
+if (Date.now() - state.timestamp > 2 * 60 * 1000) {
+  delete menuReplyState[senderNumber];
+  return reply("⏰ Menu session expired. Type `.menu` to open again.");
+}
+
+const input = m.body.trim();
+if (!/^[0-9]$|^10$/.test(input)) return; // Only 1–10
+const choice = parseInt(input, 10);
+
+// Generate the submenu content
+let submenu;
+switch (choice) {
+  case 1:
+    submenu = `⚔️ *Main Commands*
+
+.menu .ping .owner .alive; break; case 2: submenu = 🔮 Download Commands .song [name] .video [name] .ytmp3 [link]; break; case 3: submenu = 🔐 Group Commands .kick [@user] .add [@user] .promote [@user] .demote [@user]; break; case 4: submenu = 👑 Owner Commands .eval [code] .shutdown .setpp [url]; break; case 5: submenu = 🪄 Convert Commands .sticker [reply] .photo [url] .gif [reply] .mp3 [reply]; break; case 6: submenu = 🔎 Search Commands .lyrics [song] .image [query] .google [query] .github [username]; break; case 7: submenu = 🧚🏻 Anime Commands .anime [name] .manga [name] .waifu; break; case 8: submenu = 💫 Fun Commands .joke .truth .dare .meme; break; case 9: submenu = 🤖 AI Commands .ask [question] .imagine [prompt]; break; case 10: submenu = 🎲 Other Commands .calc [expr] .remind [text] .short [url]`; break; }
+
+// Send and clear state
+await reply(submenu);
+delete menuReplyState[senderNumber];
+
+} );
 
 module.exports = { menuReplyState };
+
