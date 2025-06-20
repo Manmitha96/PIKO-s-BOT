@@ -23,27 +23,30 @@ cmd(
     filename: __filename,
   },
   async (client, m, mek, { senderNumber, reply }) => {
-    const state = replyTrack[senderNumber];
-    const quoted = m.quoted;
-    if (!state || !quoted) return;
+    const state = menuReplyState[senderNumber];
+    const context = m.message?.extendedTextMessage?.contextInfo;
 
-    const msgId =
-      quoted?.key?.id ||
-      quoted?.contextInfo?.stanzaId ||
-      quoted?.id;
+    if (!state || !context?.stanzaId) return;
 
-    console.log("User replied to ID:", msgId);
-    console.log("Stored ID:", state.msgId);
+    const repliedMsgId = context.stanzaId;
 
-    if (msgId !== state.msgId) return;
+    console.log("↩️ User replied to:", repliedMsgId);
+    console.log("📌 Expected msgId:", state.msgId);
+
+    if (repliedMsgId !== state.msgId) return;
 
     const text = m.body.trim();
-    if (text === "1") {
-      return reply("✅ You selected Option One.");
-    } else if (text === "2") {
-      return reply("✅ You selected Option Two.");
+    const match = text.match(/^\.?(\d{1,2})$/);
+    if (!match) return;
+
+    const category = match[1];
+    const submenu = categoryMenus[category];
+
+    if (submenu) {
+      await reply(submenu);
+      delete menuReplyState[senderNumber];
     } else {
-      return reply("❌ Invalid. Reply with 1 or 2.");
+      await reply("❌ Invalid number. Please reply with a number between 1 and 10.");
     }
   }
 );
