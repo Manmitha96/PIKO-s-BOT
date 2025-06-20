@@ -98,7 +98,7 @@ const categoryMenus = {
 // Main menu command
 cmd(
   {
-    pattern: "menu",
+    pattern: "menu2",
     alias: ["getmenu"],
     react: "📜",
     desc: "Get command list",
