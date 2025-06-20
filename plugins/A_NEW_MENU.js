@@ -4,6 +4,7 @@ const os = require("os");
 
 let menuReplyState = {};
 
+// Format uptime
 const formatDuration = (seconds) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -25,59 +26,57 @@ const categoryMenus = {
 *│⚜️ DOWNLOAD Command List:*
 *╰──────────●●►*
 
-*╭──────────●●►*
-*│Command:* twitter
-*│Use:* .twitter < Link >
+*│Command:* twitter\n*│Use:* .twitter < Link >
 *╰──────────●●►*
-*│Command:* gdrive2\n│Use:* .gdrive2 < Link >
+*│Command:* gdrive2\n*│Use:* .gdrive2 < Link >
 *╰──────────●●►*
-*│Command:* gdrive\n│Use:* .gdrive < Link >
+*│Command:* gdrive\n*│Use:* .gdrive < Link >
 *╰──────────●●►*
-*│Command:* mediafire\n│Use:* .mediafire < Link >
+*│Command:* mediafire\n*│Use:* .mediafire < Link >
 *╰──────────●●►*
-*│Command:* ig\n│Use:* .ig < Link >
+*│Command:* ig\n*│Use:* .ig < Link >
 *╰──────────●●►*
-*│Command:* apk\n│Use:* .apk < Link or Name >
+*│Command:* apk\n*│Use:* .apk < Link or Name >
 *╰──────────●●►*
-*│Command:* mega\n│Use:* .mega < Link >
+*│Command:* mega\n*│Use:* .mega < Link >
 *╰──────────●●►*
-*│Command:* tiktok\n│Use:* .tiktok < Link >
+*│Command:* tiktok\n*│Use:* .tiktok < Link >
 *╰──────────●●►*
-*│Command:* fb\n│Use:* .fb < Link >
+*│Command:* fb\n*│Use:* .fb < Link >
 *╰──────────●●►*
-*│Command:* modapk\n│Use:* undefined
+*│Command:* modapk\n*│Use:* undefined
 *╰──────────●●►*
-*│Command:* xnxxdown\n│Use:* .xnxxdown <query>
+*│Command:* xnxxdown\n*│Use:* .xnxxdown <query>
 *╰──────────●●►*
-*│Command:* xvs\n│Use:* .xvs <query>
+*│Command:* xvs\n*│Use:* .xvs <query>
 *╰──────────●●►*
-*│Command:* ringtone\n│Use:* .ringtone *<Song Name>*
+*│Command:* ringtone\n*│Use:* .ringtone *<Song Name>*
 *╰──────────●●►*
-*│Command:* xvdown\n│Use:* .xvdown <xvideos link>
+*│Command:* xvdown\n*│Use:* .xvdown <xvideos link>
 *╰──────────●●►*
-*│Command:* pronhub\n│Use:* .pronhub <query>
+*│Command:* pronhub\n*│Use:* .pronhub <query>
 *╰──────────●●►*
-*│Command:* prondl\n│Use:* .prondl <pronhub link>
+*│Command:* prondl\n*│Use:* .prondl <pronhub link>
 *╰──────────●●►*
-*│Command:* epron\n│Use:* .eporner <query>
+*│Command:* epron\n*│Use:* .eporner <query>
 *╰──────────●●►*
-*│Command:* epdl\n│Use:* .epdl <eporner link>
+*│Command:* epdl\n*│Use:* .epdl <eporner link>
 *╰──────────●●►*
-*│Command:* xhamster\n│Use:* .xhamster <query>
+*│Command:* xhamster\n*│Use:* .xhamster <query>
 *╰──────────●●►*
-*│Command:* xhadl\n│Use:* .xhadl <eporner link>
+*│Command:* xhadl\n*│Use:* .xhadl <eporner link>
 *╰──────────●●►*
-*│Command:* getrepo\n│Use:* .getrepo <GitHub Repository URL>
+*│Command:* getrepo\n*│Use:* .getrepo <GitHub Repository URL>
 *╰──────────●●►*
-*│Command:* img\n│Use:* .gimage *<query>*
+*│Command:* img\n*│Use:* .gimage *<query>*
 *╰──────────●●►*
-*│Command:* song\n│Use:* .song < Text or Link >
+*│Command:* song\n*│Use:* .song < Text or Link >
 *╰──────────●●►*
-*│Command:* video2\n│Use:* .video2 < Text or Link >
+*│Command:* video2\n*│Use:* .video2 < Text or Link >
 *╰──────────●●►*
-*│Command:* video\n│Use:* .video < Text or Link >
+*│Command:* video\n*│Use:* .video < Text or Link >
 *╰──────────●●►*
-*│Command:* spotifydl\n│Use:* .spotifydl <spotify Link>
+*│Command:* spotifydl\n*│Use:* .spotifydl <spotify Link>
 *╰──────────●●►*
 
 ➠ *Total Commands in DOWNLOAD*: 26
@@ -95,10 +94,10 @@ const categoryMenus = {
   "10": "🎲 *Other Commands*\n\n.calc\n.time\n.weather",
 };
 
-// Main menu command
+// Send menu
 cmd(
   {
-    pattern: "menu2",
+    pattern: "menu",
     alias: ["getmenu"],
     react: "📜",
     desc: "Get command list",
@@ -126,7 +125,7 @@ cmd(
 6. 🔎 Search Commands
 7. 🧚🏻 Anime Commands
 8. 💫 Fun Commands
-9. 🤖 Ai Commands
+9. 🤖 AI Commands
 10. 🎲 Other Commands
 
 *_Reply with a number like (1) to get commands in that category._*
@@ -153,7 +152,7 @@ cmd(
   }
 );
 
-// Listen for replies to the menu message
+// Handle replies to menu
 cmd(
   {
     pattern: ".*",
@@ -164,12 +163,23 @@ cmd(
     const quoted = m.quoted;
 
     if (!state || !quoted) return;
+
+    // Auto-expire after 5 min
     if (Date.now() - state.timestamp > 5 * 60 * 1000) {
       delete menuReplyState[senderNumber];
       return;
     }
 
-    const repliedMsgId = quoted.key.id;
+    // Fix: get replied message ID safely
+    const repliedMsgId =
+      quoted?.key?.id ||
+      quoted?.contextInfo?.stanzaId ||
+      quoted?.id;
+
+    // Debug (optional)
+    console.log("↪️ Replying to:", repliedMsgId);
+    console.log("✅ Expected:", state.msgId);
+
     if (repliedMsgId !== state.msgId) return;
 
     const text = m.body?.trim();
