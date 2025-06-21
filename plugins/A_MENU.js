@@ -1,80 +1,59 @@
 // plugins/menu.js
 const { cmd } = require("../command");
 const config = require("../config");
-const os = require("os");
 
-// Store menu states
-let menuStates = {};
+// Store menu message IDs
+let menuMessageStore = {};
 
-// Submenus data
 const subMenus = {
   1: `⚔️ *Main Commands* ⚔️
-• .ping - Check bot response
-• .menu - Show main menu
-• .help - Get help
-• .owner - Contact owner`,
+• .ping - Check bot
+• .help - Get help`,
 
   2: `🔮 *Download Commands* 🔮
-• .yt [url] - Download YouTube video
-• .ig [url] - Download Instagram content
-• .fb [url] - Download Facebook video`,
+• .yt [url] - YouTube DL
+• .ig [url] - Instagram DL`,
 
-  3: `🔐 *Group Commands* 🔐
-• .add [number] - Add user to group
-• .kick [@tag] - Remove user from group
-• .promote [@tag] - Make user admin`,
+  // Add more submenus...
 };
-
-// Clean up old states every 5 minutes
-setInterval(() => {
-  console.log('[MENU] Running cleanup of old menu states');
-  const now = Date.now();
-  for (const [number, state] of Object.entries(menuStates)) {
-    if (now - state.timestamp > 300000) {
-      console.log(`[MENU] Cleaning up state for ${number}`);
-      delete menuStates[number];
-    }
-  }
-}, 60000);
 
 cmd(
   {
-    pattern: "menu",
+    pattern: "menu2",
     alias: ["getmenu"],
     react: "📜",
-    desc: "Get command list",
+    desc: "Show command menu",
     category: "main",
     filename: __filename,
   },
-  async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
+  async (robin, mek, m, { from, senderNumber, pushname }) => {
     try {
-      console.log(`[MENU] Received menu command from ${senderNumber}`);
-      
-      let uptime = (process.uptime() / 60).toFixed(2);
-      let used = process.memoryUsage().heapUsed / 1024 / 1024;
-      let ramUsage = `${Math.round(used * 100) / 100} MB`;
+      const uptime = (process.uptime() / 60).toFixed(2);
+      const ramUsage = `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`;
 
-      let menuText = `👋 *Hello ${pushname}*\n\n🕐 *Uptime:* ${uptime} minutes\n📦 *RAM Usage:* ${ramUsage}\n\n📍 *Select a Category:*\n\n1. ⚔️ Main\n2. 🔮 Download\n3. 🔐 Group\n4. 👑 Owner\n5. 🪄 Convert\n6. 🔎 Search\n7. 🧚 Anime\n8. 💫 Fun\n9. 🤖 AI\n10. 🎲 Other\n\n*Reply with a number (e.g. "1")*\n\n☯️ *Made by P_I_K_O*`;
-
-      console.log(`[MENU] Sending menu to ${senderNumber}`);
-      const sentMsg = await robin.sendMessage(
+      const menuMsg = await robin.sendMessage(
         from,
         {
           image: { url: config.ALIVE_IMG },
-          caption: menuText,
+          caption: `👋 *Hello ${pushname}*\n\n` +
+                   `🕐 Uptime: ${uptime} min\n` +
+                   `📦 RAM: ${ramUsage}\n\n` +
+                   `📜 *Select Category:*\n\n` +
+                   `1. ⚔️ Main\n2. 🔮 Download\n3. 🔐 Group\n` +
+                   `...\n\n` +
+                   `*Reply with number* (e.g. "1")`,
         },
         { quoted: mek }
       );
 
-      console.log(`[MENU] Storing state for ${senderNumber}, message ID: ${sentMsg.key.id}`);
-      menuStates[senderNumber] = {
-        menuId: sentMsg.key.id,
+      // Store menu message ID
+      menuMessageStore[senderNumber] = {
+        id: menuMsg.key.id,
         timestamp: Date.now()
       };
 
     } catch (e) {
-      console.error('[MENU ERROR] In main menu command:', e);
-      reply(`Error: ${e.message}`);
+      console.error("Menu error:", e);
     }
   }
 );
@@ -86,48 +65,40 @@ cmd(
     fromMe: false,
     deleteCommand: false,
   },
-  async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
+  async (robin, mek, m, { from, senderNumber, reply }) => {
     try {
-      console.log(`[MENU] Received message from ${senderNumber}`);
-      
-      if (mek.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+      // Check if this is a reply to a message
+      if (mek.message?.extendedTextMessage?.contextInfo) {
         const quotedId = mek.message.extendedTextMessage.contextInfo.stanzaId;
-        console.log(`[MENU] Detected reply to message ID: ${quotedId}`);
+        const userState = menuMessageStore[senderNumber];
         
-        const menuState = menuStates[senderNumber];
-        console.log(`[MENU] Current state for ${senderNumber}:`, menuState);
-        
-        if (menuState && quotedId === menuState.menuId) {
-          console.log(`[MENU] Valid reply to menu detected from ${senderNumber}`);
-          
+        // Verify this is a reply to the menu message
+        if (userState && quotedId === userState.id) {
           const userInput = mek.message.extendedTextMessage.text.trim();
-          console.log(`[MENU] User input: "${userInput}"`);
+          const selected = parseInt(userInput);
           
-          const selectedOption = parseInt(userInput);
-          
-          if (!isNaN(selectedOption) && subMenus[selectedOption]) {
-            console.log(`[MENU] Sending submenu ${selectedOption} to ${senderNumber}`);
-            await robin.sendMessage(
-              from,
-              { text: subMenus[selectedOption] },
-              { quoted: mek }
-            );
-          } else {
-            console.log(`[MENU] Invalid input from ${senderNumber}: ${userInput}`);
-            reply("Please reply with a valid number (1-10)");
+          // Validate input and send submenu
+          if (!isNaN(selected) && subMenus[selected]) {
+            await reply(subMenus[selected]);
+            // Update last activity time
+            userState.timestamp = Date.now();
           }
-          
-          menuState.timestamp = Date.now();
-        } else {
-          console.log(`[MENU] Reply not matching menu state for ${senderNumber}`);
         }
-      } else {
-        console.log(`[MENU] Regular message from ${senderNumber}, not a reply`);
       }
     } catch (e) {
-      console.error('[MENU ERROR] In reply handler:', e);
+      console.error("Menu reply error:", e);
     }
   }
 );
 
-module.exports = { menuStates };
+// Clean old menu states hourly
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(menuMessageStore).forEach(number => {
+    if (now - menuMessageStore[number].timestamp > 3600000) {
+      delete menuMessageStore[number];
+    }
+  });
+}, 3600000);
+
+module.exports = { menuMessageStore };
