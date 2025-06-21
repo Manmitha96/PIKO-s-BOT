@@ -1,118 +1,51 @@
-// plugins/menu.js
+// plugins/menu-handler.js
+// Additional menu handler for better organization
 
 const { cmd } = require("../command");
-const config = require("../config");
-const os = require("os");
 
-// Temporary state storage
-let menuReplyState = {};
+// Quick access commands for each category
+const quickAccessCommands = [
+  { pattern: "1", category: 1, name: "Main Commands" },
+  { pattern: "2", category: 2, name: "Download Commands" },
+  { pattern: "3", category: 3, name: "Group Commands" },
+  { pattern: "4", category: 4, name: "Owner Commands" },
+  { pattern: "5", category: 5, name: "Convert Commands" },
+  { pattern: "6", category: 6, name: "Search Commands" },
+  { pattern: "7", category: 7, name: "Anime Commands" },
+  { pattern: "8", category: 8, name: "Fun Commands" },
+  { pattern: "9", category: 9, name: "AI Commands" },
+  { pattern: "10", category: 10, name: "Other Commands" }
+];
 
-cmd(
-  {
-    pattern: "menu",
-    alias: ["getmenu"],
-    react: "📜",
-    desc: "Get command list",
-    category: "main",
-    filename: __filename,
-  },
-  async (robin, mek, m, { from, senderNumber, pushname, reply }) => {
-    try {
-      let uptime = (process.uptime() / 60).toFixed(2);
-      let used = process.memoryUsage().heapUsed / 1024 / 1024;
-      let ramUsage = `${Math.round(used * 100) / 100} MB`;
-
-      let madeMenu = `👋 *Hello ${pushname}*
-
-🕐 *Uptime:* ${uptime} minutes
-📦 *RAM Usage:* ${ramUsage}
-
-📍 *Select a Category by replying with a number:*
-
-1. ⚔️ Main Commands
-2. 🔮 Download Commands
-3. 🔐 Group Commands
-4. 👑 Owner Commands
-5. 🪄 Convert Commands
-6. 🔎 Search Commands
-7. 🧚🏻 Anime Commands
-8. 💫 Fun Commands
-9. 🤖 Ai Commands
-10. 🎲 Other Commands
-
-*_Reply with a number (e.g., "1") to view the commands in that category._*
-
-☯️ *Made by P_I_K_O*`;
-
-      const menuMessage = await robin.sendMessage(
-        from,
-        {
-          image: { url: config.ALIVE_IMG },
-          caption: madeMenu,
-        },
-        { quoted: mek }
-      );
-
-      // Store menu message ID for tracking replies
-      menuReplyState[senderNumber] = {
-        expecting: true,
-        timestamp: Date.now(),
-        messageId: menuMessage.key.id,
-        type: 'main_menu'
-      };
-
-      // Clean up old states (older than 10 minutes)
-      setTimeout(() => {
-        Object.keys(menuReplyState).forEach(number => {
-          if (Date.now() - menuReplyState[number].timestamp > 600000) {
-            delete menuReplyState[number];
-          }
-        });
-      }, 600000);
-
-    } catch (e) {
-      console.error(e);
-      reply(`Error: ${e.message}`);
-    }
-  }
-);
-
-// Handle menu navigation replies
-cmd(
-  {
-    on: "body",
-    fromMe: false,
-  },
-  async (robin, mek, m, { from, senderNumber, body, reply, quoted }) => {
-    try {
-      // Check if user has an active menu state
-      const userState = menuReplyState[senderNumber];
-      if (!userState || !userState.expecting) return;
-
-      // Check if this is a reply to the menu message
-      if (quoted && quoted.id === userState.messageId) {
-        const userInput = body.trim();
-        const selected = parseInt(userInput);
-
-        if (!isNaN(selected) && selected >= 1 && selected <= 10) {
-          // Send the appropriate submenu
-          await sendSubMenu(robin, from, selected, mek, reply);
-          
-          // Update user state
-          userState.timestamp = Date.now();
-          userState.expecting = false; // Stop expecting replies after selection
-        } else {
-          reply("❌ Please reply with a valid number (1-10) to select a category.");
-        }
+// Register quick access commands
+quickAccessCommands.forEach(({ pattern, category, name }) => {
+  cmd(
+    {
+      pattern: pattern,
+      react: "📋",
+      desc: `Quick access to ${name}`,
+      category: "menu",
+      filename: __filename,
+    },
+    async (robin, mek, m, { from, reply }) => {
+      try {
+        // Import the sendSubMenu function from menu.js
+        const { sendSubMenu } = require('./menu.js');
+        
+        // Send the appropriate submenu directly
+        await sendDirectSubMenu(robin, from, category, mek, reply);
+      } catch (e) {
+        console.error(`Error in quick access ${pattern}:`, e);
+        reply(`❌ Error loading ${name}. Please try .menu instead.`);
       }
-    } catch (e) {
-      console.error("Menu navigation error:", e);
     }
-  }
-);
+  );
+});
 
-// Function to send submenus
-async function sendSubMenu(robin, from, categoryNumber, mek, reply) {
+// Direct submenu function (duplicate of the one in menu.js for independence)
+async function sendDirectSubMenu(robin, from, categoryNumber, mek, reply) {
+  const config = require("../config");
+  
   const subMenus = {
     1: {
       title: "⚔️ *MAIN COMMANDS* ⚔️",
@@ -245,4 +178,4 @@ ${selectedMenu.commands.join('\n')}
   }
 }
 
-module.exports = { menuReplyState };
+module.exports = { sendDirectSubMenu };
