@@ -4,8 +4,20 @@ const { cmd } = require("../command");
 const config = require("../config");
 const os = require("os");
 
-// Temporary state storage
+// Enhanced state storage with persistent memory
 let menuReplyState = {};
+
+// Auto cleanup function - runs every minute
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(menuReplyState).forEach(number => {
+    // Remove states older than 8 minutes (480,000 ms)
+    if (now - menuReplyState[number].timestamp > 480000) {
+      console.log(`🧹 Cleaning up menu state for ${number} (expired after 8 minutes)`);
+      delete menuReplyState[number];
+    }
+  });
+}, 60000); // Check every minute
 
 cmd(
   {
@@ -40,7 +52,8 @@ cmd(
 9. 🤖 Ai Commands
 10. 🎲 Other Commands
 
-*_Reply with a number (e.g., "1") to view the commands in that category._*
+*_Reply with a number (e.g., "1") to view commands._*
+*_Menu stays active for 8 minutes!_*
 
 ☯️ *Made by P_I_K_O*`;
 
@@ -53,22 +66,17 @@ cmd(
         { quoted: mek }
       );
 
-      // Store menu message ID for tracking replies
+      // Store menu state with persistent memory
       menuReplyState[senderNumber] = {
         expecting: true,
         timestamp: Date.now(),
         messageId: menuMessage.key.id,
-        type: 'main_menu'
+        type: 'main_menu',
+        chatId: from,
+        lastMenuMessageId: menuMessage.key.id
       };
 
-      // Clean up old states (older than 10 minutes)
-      setTimeout(() => {
-        Object.keys(menuReplyState).forEach(number => {
-          if (Date.now() - menuReplyState[number].timestamp > 600000) {
-            delete menuReplyState[number];
-          }
-        });
-      }, 600000);
+      console.log(`📋 Menu activated for ${senderNumber} - Active for 8 minutes`);
 
     } catch (e) {
       console.error(e);
@@ -77,7 +85,7 @@ cmd(
   }
 );
 
-// Handle menu navigation replies
+// Enhanced menu navigation handler
 cmd(
   {
     on: "body",
@@ -89,18 +97,29 @@ cmd(
       const userState = menuReplyState[senderNumber];
       if (!userState || !userState.expecting) return;
 
-      // Check if this is a reply to the menu message
-      if (quoted && quoted.id === userState.messageId) {
-        const userInput = body.trim();
-        const selected = parseInt(userInput);
+      // Check if this is a reply to any menu message OR just a number
+      const userInput = body.trim();
+      const selected = parseInt(userInput);
 
+      // Accept replies to menu messages OR direct number inputs
+      const isValidReply = quoted && (
+        quoted.id === userState.messageId || 
+        quoted.id === userState.lastMenuMessageId
+      );
+      
+      const isDirectNumber = !isNaN(selected) && selected >= 1 && selected <= 10 && userInput.length <= 2;
+
+      if (isValidReply || isDirectNumber) {
         if (!isNaN(selected) && selected >= 1 && selected <= 10) {
           // Send the appropriate submenu
-          await sendSubMenu(robin, from, selected, mek, reply);
+          const submenuMessage = await sendSubMenu(robin, from, selected, mek, reply);
           
-          // Update user state
-          userState.timestamp = Date.now();
-          userState.expecting = false; // Stop expecting replies after selection
+          // Update user state but KEEP expecting more replies
+          userState.timestamp = Date.now(); // Refresh the 8-minute timer
+          userState.expecting = true; // Keep expecting replies!
+          userState.lastMenuMessageId = submenuMessage.key.id; // Track latest message
+          
+          console.log(`📋 User ${senderNumber} selected menu ${selected} - Menu still active`);
         } else {
           reply("❌ Please reply with a valid number (1-10) to select a category.");
         }
@@ -111,7 +130,7 @@ cmd(
   }
 );
 
-// Function to send submenus
+// Enhanced submenu function that returns message info
 async function sendSubMenu(robin, from, categoryNumber, mek, reply) {
   const subMenus = {
     1: {
@@ -231,10 +250,13 @@ ${selectedMenu.commands.join('\n')}
 
 💡 *Usage:* Simply type any command to use it!
 🔙 *Back to main menu:* Type .menu
+⏰ *Menu expires in 8 minutes*
+
+*Reply with another number (1-10) for more categories!*
 
 ☯️ *Made by P_I_K_O*`;
 
-    await robin.sendMessage(
+    const submenuMessage = await robin.sendMessage(
       from,
       {
         image: { url: config.ALIVE_IMG },
@@ -242,7 +264,36 @@ ${selectedMenu.commands.join('\n')}
       },
       { quoted: mek }
     );
+
+    return submenuMessage; // Return message info for tracking
   }
 }
 
-module.exports = { menuReplyState };
+// Command to check menu status (for debugging)
+cmd(
+  {
+    pattern: "menustatus",
+    desc: "Check menu status",
+    category: "main",
+    filename: __filename,
+  },
+  async (robin, mek, m, { from, senderNumber, reply }) => {
+    try {
+      const userState = menuReplyState[senderNumber];
+      if (userState) {
+        const timeLeft = Math.max(0, 480000 - (Date.now() - userState.timestamp));
+        const minutesLeft = Math.floor(timeLeft / 60000);
+        const secondsLeft = Math.floor((timeLeft % 60000) / 1000);
+        
+        reply(`📋 *Menu Status:* Active\n⏰ *Time Left:* ${minutesLeft}m ${secondsLeft}s\n🎯 *Type a number (1-10) to navigate!*`);
+      } else {
+        reply(`📋 *Menu Status:* Inactive\n💡 *Type .menu to activate!*`);
+      }
+    } catch (e) {
+      console.error(e);
+      reply(`Error: ${e.message}`);
+    }
+  }
+);
+
+module.exports = { menuReplyState, sendSubMenu };
