@@ -42,7 +42,7 @@ cmd(
       let seconds = uptimeSeconds % 60;
       let formattedUptime = hours > 0 ? `${hours} hours, ${minutes} minutes, ${seconds} seconds` : `${minutes} minutes, ${seconds} seconds`;
 
-      let madeMenu = `*HELLO* @${senderNumber}
+      let madeMenu = `👋 *HELLO  @${pushname}*
 *╭─「 ᴄᴏᴍᴍᴀɴᴅꜱ ᴘᴀɴᴇʟ」*
 *│◈ 𝚁𝙰𝙼 𝚄𝚂𝙰𝙶𝙴 -* ${ramUsage}
 *│◈ 𝚁𝚄𝙽𝚃𝙸𝙼𝙴 -* ${formattedUptime}
