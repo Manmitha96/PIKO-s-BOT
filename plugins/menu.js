@@ -57,10 +57,10 @@ cmd(
 *│ 4   SEARCH*
 *│ 5   AI*
 *│ 6   CONVERT*
-*│ 7   MATHTOOL*
+*│ 7   FUN*
 *│ 8   GROUP*
-*│ 9   STICKER*
-*│ 10   GAME*
+*│ 9   ANEMI*
+*│ 10   OTHER*
 *╰───────────●●►*
 
 *🌟 Reply the Number you want to select*
@@ -160,7 +160,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
   const subMenus = {
     1: {
       title: "OWNER",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Owner.png",
       commands: [
         { name: "restart", use: ".restart" },
         { name: "block", use: ".block <reply to user>" },
@@ -170,17 +170,19 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
     },
     2: {
       title: "MAIN",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Main.png",
       commands: [
         { name: "alive", use: ".alive" },
         { name: "menu", use: ".menu" },
         { name: "ping", use: ".ping" },
-        { name: "system", use: ".system" }
+        { name: "system", use: ".system" },
+        { name: "vv", use: ".vv <reply to view once>" },
+        { name: "dp", use: ".dp < number or reply >" }
       ]
     },
     3: {
       title: "DOWNLOAD",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Download.png",
       commands: [
         { name: "song", use: ".song < Text or Link >" },
         { name: "video", use: ".video < Text or Link >" },
@@ -194,7 +196,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
     },
     4: {
       title: "SEARCH",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Search.png",
       commands: [
         { name: "githubstalk", use: ".githubstalk < username >" },
         { name: "Coming soon..", use: ".Coming soon.." }
@@ -202,7 +204,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
     },
     5: {
       title: "AI",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Al.png",
       commands: [
         { name: "ai", use: ".ai < text >" },
         { name: "gemini", use: ".gemini < text >" },
@@ -215,7 +217,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
     },
     6: {
       title: "CONVERT",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Convert.png",
       commands: [
         { name: "tosticker", use: ".tosticker <reply to image>" },
         { name: "toimg", use: ".toimg <reply to sticker>" },
@@ -223,16 +225,19 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
       ]
     },
     7: {
-      title: "MATHTOOL",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg",
+      title: "FUN",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Fun.png",
       commands: [
-        { name: "Coming soon..", use: ".Coming soon.." },
-        { name: "Coming soon..", use: ".Coming soon.." }
+        { name: "hack", use: ".hack" },
+        { name: "animegirl", use: ".animegirl" },
+        { name: "fact", use: ".fact" },
+        { name: "joke", use: ".joke" },
+        { name: "dog", use: ".dog" }
       ]
     },
     8: {
       title: "GROUP",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Group.png",
       commands: [
         { name: "kick", use: ".kick <reply to user>" },
         { name: "add", use: ".add < number >" },
@@ -240,12 +245,13 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
         { name: "demote", use: ".demote <reply to user>" },
         { name: "mute", use: ".mute" },
         { name: "unmute", use: ".unmute" },
-        { name: "dp", use: ".dp < number or reply >" }
+        { name: "dp", use: ".dp < number or reply >" },
+        { name: "vv", use: ".vv <reply to view once>" }
       ]
     },
     9: {
-      title: "STICKER",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
+      title: "ANEMI",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Anemi.png",
       commands: [
         { name: "loli", use: ".loli" },
         { name: "waifu", use: ".waifu" },
@@ -256,15 +262,12 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
       ]
     },
     10: {
-      title: "GAME",
-      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
+      title: "OTHER",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/Other.png",
       commands: [
-        { name: "hack", use: ".hack" },
-        { name: "animegirl", use: ".animegirl" },
-        { name: "fact", use: ".fact" },
-        { name: "joke", use: ".joke" },
-        { name: "dog", use: ".dog" },
+        
         { name: "gpass", use: ".gpass < number >" },
+        { name: "githubstalk", use: ".githubstalk < username >" },
         { name: "sh", use: ".sh" }
       ]
     }
@@ -277,7 +280,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
       commandList += `*╭──────────●●►*\n*│Command:* ${cmd.name}\n*│Use:* ${cmd.use}\n*╰──────────●●►*\n\n`;
     });
 
-    const menuText = `*HELLO* @${senderNumber}
+    const menuText = `👋 *HELLO  @${pushname}*
 *╭─「 ᴄᴏᴍᴍᴀɴᴅꜱ ᴘᴀɴᴇʟ」*
 *│◈ 𝚁𝙰𝙼 𝚄𝚂𝙰𝙶𝙴 -* ${ramUsage}
 *│◈ 𝚁𝚄𝙽𝚃𝙸𝙼𝙴 -* ${formattedUptime}
