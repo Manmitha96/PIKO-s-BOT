@@ -11,6 +11,7 @@ module.exports = {
   OWNER_JID: process.env.OWNER_JID || "75227023323273@lid",
   PREFIX: process.env.PREFIX || ".",
   ALIVE_IMG: process.env.ALIVE_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
+  MAINMENU_IMG: process.env.MAINMENU_IMG || "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/MainBotmenu.jpg",
   ALIVE_MSG: process.env.ALIVE_MSG || "Hello , I am alive now!!\n\n*☯️OWNED BY P_I_K_O☯️*",
   MODE: process.env.MODE || "public",
   AUTO_VOICE: process.env.AUTO_VOICE || "true",
