@@ -280,7 +280,7 @@ async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber
       commandList += `*╭──────────●●►*\n*│Command:* ${cmd.name}\n*│Use:* ${cmd.use}\n*╰──────────●●►*\n\n`;
     });
 
-    const menuText = `👋 *HELLO  @${pushname}*
+    const menuText = `👋 *HELLO*
 *╭─「 ᴄᴏᴍᴍᴀɴᴅꜱ ᴘᴀɴᴇʟ」*
 *│◈ 𝚁𝙰𝙼 𝚄𝚂𝙰𝙶𝙴 -* ${ramUsage}
 *│◈ 𝚁𝚄𝙽𝚃𝙸𝙼𝙴 -* ${formattedUptime}
