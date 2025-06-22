@@ -70,7 +70,7 @@ cmd(
       const menuMessage = await robin.sendMessage(
         from,
         {
-          image: { url: config.ALIVE_IMG },
+          image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/BotMenuPhoto/MainBotmenu.jpg",
           caption: madeMenu,
           contextInfo: {
             mentionedJid: [`${senderNumber}@s.whatsapp.net`]
