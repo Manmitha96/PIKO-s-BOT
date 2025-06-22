@@ -85,7 +85,7 @@ cmd(
   }
 );
 
-// Enhanced menu navigation handler
+// Enhanced menu navigation handler - REPLY ONLY
 cmd(
   {
     on: "body",
@@ -97,32 +97,32 @@ cmd(
       const userState = menuReplyState[senderNumber];
       if (!userState || !userState.expecting) return;
 
-      // Check if this is a reply to any menu message OR just a number
+      // 🎯 CRITICAL: Only accept if this is a REPLY to a menu message
+      if (!quoted) return; // Must be a reply
+
+      // Check if replying to any menu message
+      const isReplyToMenu = quoted.id === userState.messageId || 
+                           quoted.id === userState.lastMenuMessageId;
+      
+      if (!isReplyToMenu) return; // Must reply to menu message
+
+      // Parse the user input
       const userInput = body.trim();
       const selected = parseInt(userInput);
 
-      // Accept replies to menu messages OR direct number inputs
-      const isValidReply = quoted && (
-        quoted.id === userState.messageId || 
-        quoted.id === userState.lastMenuMessageId
-      );
-      
-      const isDirectNumber = !isNaN(selected) && selected >= 1 && selected <= 10 && userInput.length <= 2;
-
-      if (isValidReply || isDirectNumber) {
-        if (!isNaN(selected) && selected >= 1 && selected <= 10) {
-          // Send the appropriate submenu
-          const submenuMessage = await sendSubMenu(robin, from, selected, mek, reply);
-          
-          // Update user state but KEEP expecting more replies
-          userState.timestamp = Date.now(); // Refresh the 8-minute timer
-          userState.expecting = true; // Keep expecting replies!
-          userState.lastMenuMessageId = submenuMessage.key.id; // Track latest message
-          
-          console.log(`📋 User ${senderNumber} selected menu ${selected} - Menu still active`);
-        } else {
-          reply("❌ Please reply with a valid number (1-10) to select a category.");
-        }
+      // Validate number selection (1-10)
+      if (!isNaN(selected) && selected >= 1 && selected <= 10) {
+        // Send the appropriate submenu
+        const submenuMessage = await sendSubMenu(robin, from, selected, mek, reply);
+        
+        // Update user state but KEEP expecting more replies
+        userState.timestamp = Date.now(); // Refresh the 8-minute timer
+        userState.expecting = true; // Keep expecting replies!
+        userState.lastMenuMessageId = submenuMessage.key.id; // Track latest message
+        
+        console.log(`📋 User ${senderNumber} selected menu ${selected} via REPLY - Menu still active`);
+      } else {
+        reply("❌ Please reply with a valid number (1-10) to select a category.");
       }
     } catch (e) {
       console.error("Menu navigation error:", e);
@@ -285,7 +285,7 @@ cmd(
         const minutesLeft = Math.floor(timeLeft / 60000);
         const secondsLeft = Math.floor((timeLeft % 60000) / 1000);
         
-        reply(`📋 *Menu Status:* Active\n⏰ *Time Left:* ${minutesLeft}m ${secondsLeft}s\n🎯 *Type a number (1-10) to navigate!*`);
+        reply(`📋 *Menu Status:* Active\n⏰ *Time Left:* ${minutesLeft}m ${secondsLeft}s\n🎯 *Reply to menu with a number (1-10) to navigate!*`);
       } else {
         reply(`📋 *Menu Status:* Inactive\n💡 *Type .menu to activate!*`);
       }
