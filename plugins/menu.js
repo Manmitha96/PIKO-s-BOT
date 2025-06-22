@@ -32,36 +32,49 @@ cmd(
     try {
       let uptime = (process.uptime() / 60).toFixed(2);
       let used = process.memoryUsage().heapUsed / 1024 / 1024;
-      let ramUsage = `${Math.round(used * 100) / 100} MB`;
+      let totalRam = Math.round(require('os').totalmem / 1024 / 1024);
+      let ramUsage = `${Math.round(used * 100) / 100}MB / ${totalRam}MB`;
 
-      let madeMenu = `👋 *Hello ${pushname}*
+      // Convert uptime to hours, minutes, seconds
+      let uptimeSeconds = Math.floor(process.uptime());
+      let hours = Math.floor(uptimeSeconds / 3600);
+      let minutes = Math.floor((uptimeSeconds % 3600) / 60);
+      let seconds = uptimeSeconds % 60;
+      let formattedUptime = hours > 0 ? `${hours} hours, ${minutes} minutes, ${seconds} seconds` : `${minutes} minutes, ${seconds} seconds`;
 
-🕐 *Uptime:* ${uptime} minutes
-📦 *RAM Usage:* ${ramUsage}
+      let madeMenu = `*HELLO* @${senderNumber}
+*╭─「 ᴄᴏᴍᴍᴀɴᴅꜱ ᴘᴀɴᴇʟ」*
+*│◈ 𝚁𝙰𝙼 𝚄𝚂𝙰𝙶𝙴 -* ${ramUsage}
+*│◈ 𝚁𝚄𝙽𝚃𝙸𝙼𝙴 -* ${formattedUptime}
+*╰──────────●●►*
 
-📍 *Select a Category by replying with a number:*
+*╭──────────●●►*
+*│⛵ LIST MENU*
+*│   ───────*
+*│ 1   OWNER*
+*│ 2   MAIN*
+*│ 3   DOWNLOAD*
+*│ 4   SEARCH*
+*│ 5   AI*
+*│ 6   CONVERT*
+*│ 7   MATHTOOL*
+*│ 8   GROUP*
+*│ 9   STICKER*
+*│ 10   GAME*
+*╰───────────●●►*
 
-1. ⚔️ Main Commands
-2. 🔮 Download Commands
-3. 🔐 Group Commands
-4. 👑 Owner Commands
-5. 🪄 Convert Commands
-6. 🔎 Search Commands
-7. 🧚🏻 Anime Commands
-8. 💫 Fun Commands
-9. 🤖 Ai Commands
-10. 🎲 Other Commands
+*🌟 Reply the Number you want to select*
 
-*_Reply with a number (e.g., "1") to view commands._*
-*_Menu stays active for 8 minutes!_*
-
-☯️ *Made by P_I_K_O*`;
+*㋛ 𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙿_𝙸_𝙺_𝙾 〽️*`;
 
       const menuMessage = await robin.sendMessage(
         from,
         {
           image: { url: config.ALIVE_IMG },
           caption: madeMenu,
+          contextInfo: {
+            mentionedJid: [`${senderNumber}@s.whatsapp.net`]
+          }
         },
         { quoted: mek }
       );
@@ -113,7 +126,7 @@ cmd(
       // Validate number selection (1-10)
       if (!isNaN(selected) && selected >= 1 && selected <= 10) {
         // Send the appropriate submenu
-        const submenuMessage = await sendSubMenu(robin, from, selected, mek, reply);
+        const submenuMessage = await sendSubMenu(robin, from, selected, mek, reply, senderNumber);
         
         // Update user state but KEEP expecting more replies
         userState.timestamp = Date.now(); // Refresh the 8-minute timer
@@ -131,136 +144,163 @@ cmd(
 );
 
 // Enhanced submenu function that returns message info
-async function sendSubMenu(robin, from, categoryNumber, mek, reply) {
+async function sendSubMenu(robin, from, categoryNumber, mek, reply, senderNumber) {
+  let uptime = (process.uptime() / 60).toFixed(2);
+  let used = process.memoryUsage().heapUsed / 1024 / 1024;
+  let totalRam = Math.round(require('os').totalmem / 1024 / 1024);
+  let ramUsage = `${Math.round(used * 100) / 100}MB / ${totalRam}MB`;
+
+  // Convert uptime to hours, minutes, seconds
+  let uptimeSeconds = Math.floor(process.uptime());
+  let hours = Math.floor(uptimeSeconds / 3600);
+  let minutes = Math.floor((uptimeSeconds % 3600) / 60);
+  let seconds = uptimeSeconds % 60;
+  let formattedUptime = hours > 0 ? `${hours} hours, ${minutes} minutes, ${seconds} seconds` : `${minutes} minutes, ${seconds} seconds`;
+
   const subMenus = {
     1: {
-      title: "⚔️ *MAIN COMMANDS* ⚔️",
+      title: "OWNER",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
       commands: [
-        "▪️ .alive - Check if bot is online",
-        "▪️ .menu - Show main menu",
-        "▪️ .ping - Check bot response time",
-        "▪️ .system - Show system information",
-        "▪️ More commands coming soon..."
+        { name: "restart", use: ".restart" },
+        { name: "block", use: ".block <reply to user>" },
+        { name: "left", use: ".left" },
+        { name: "update", use: ".update" }
       ]
     },
     2: {
-      title: "🔮 *DOWNLOAD COMMANDS* 🔮",
+      title: "MAIN",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
       commands: [
-        "▪️ .song <text> - Download YouTube audio",
-        "▪️ .video <text> - Download YouTube video",
-        "▪️ .fb <link> - Download Facebook video",
-        "▪️ .movie <text> - Download movies",
-        "▪️ .ytshort <link> - Download YouTube Shorts",
-        "▪️ .tiktok <link> - Download TikTok videos",
-        "▪️ .igpost <link> - Download Instagram posts",
-        "▪️ .igvideo <link> - Download Instagram videos"
+        { name: "alive", use: ".alive" },
+        { name: "menu", use: ".menu" },
+        { name: "ping", use: ".ping" },
+        { name: "system", use: ".system" }
       ]
     },
     3: {
-      title: "🔐 *GROUP COMMANDS* 🔐",
+      title: "DOWNLOAD",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg",
       commands: [
-        "▪️ .kick - Remove user from group",
-        "▪️ .mute - Mute group chat",
-        "▪️ .unmute - Unmute group chat",
-        "▪️ .add <number> - Add user to group",
-        "▪️ .left - Leave group or remove user",
-        "▪️ .demote - Remove admin privileges",
-        "▪️ .promote - Give admin privileges",
-        "▪️ .vv - Convert view once to normal",
-        "▪️ .dp - Download profile picture"
+        { name: "song", use: ".song < Text or Link >" },
+        { name: "video", use: ".video < Text or Link >" },
+        { name: "fb", use: ".fb < Link >" },
+        { name: "tiktok", use: ".tiktok < Link >" },
+        { name: "igpost", use: ".igpost < Link >" },
+        { name: "igvideo", use: ".igvideo < Link >" },
+        { name: "ytshort", use: ".ytshort < Link >" },
+        { name: "movie", use: ".movie < Movie Name >" }
       ]
     },
     4: {
-      title: "👑 *OWNER COMMANDS* 👑",
+      title: "SEARCH",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
       commands: [
-        "▪️ .restart - Restart the bot",
-        "▪️ .update - Update bot system",
-        "▪️ .left - Leave any group",
-        "▪️ .block - Block a user",
-        "▪️ .vv - Convert view once messages",
-        "▪️ .dp - Download any profile picture"
+        { name: "githubstalk", use: ".githubstalk < username >" },
+        { name: "Coming soon..", use: ".Coming soon.." }
       ]
     },
     5: {
-      title: "🪄 *CONVERT COMMANDS* 🪄",
+      title: "AI",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
       commands: [
-        "▪️ .tosticker <reply img> - Convert image to sticker",
-        "▪️ .toimg <reply sticker> - Convert sticker to image",
-        "▪️ .tr <lang><text> - Translate text",
-        "▪️ .tts <text> - Text to speech",
-        "▪️ More converters coming soon..."
+        { name: "ai", use: ".ai < text >" },
+        { name: "gemini", use: ".gemini < text >" },
+        { name: "imagine", use: ".imagine < text >" },
+        { name: "aivideoframes", use: ".aivideoframes < text >" },
+        { name: "aislideshow", use: ".aislideshow < text >" },
+        { name: "vidpreview", use: ".vidpreview < text >" },
+        { name: "aigifframes", use: ".aigifframes < text >" }
       ]
     },
     6: {
-      title: "🔎 *SEARCH COMMANDS* 🔎",
+      title: "CONVERT",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
       commands: [
-        "▪️ Search commands coming soon...",
-        "▪️ Stay tuned for updates!"
+        { name: "tosticker", use: ".tosticker <reply to image>" },
+        { name: "toimg", use: ".toimg <reply to sticker>" },
+        { name: "vv", use: ".vv <reply to view once>" }
       ]
     },
     7: {
-      title: "🧚🏻 *ANIME COMMANDS* 🧚🏻",
+      title: "MATHTOOL",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0144.jpg",
       commands: [
-        "▪️ .loli - Random loli images",
-        "▪️ .waifu - Random waifu images",
-        "▪️ .neko - Random neko images",
-        "▪️ .megumin - Random megumin images",
-        "▪️ .maid - Random maid images",
-        "▪️ .awoo - Random awoo images"
+        { name: "Coming soon..", use: ".Coming soon.." },
+        { name: "Coming soon..", use: ".Coming soon.." }
       ]
     },
     8: {
-      title: "💫 *FUN COMMANDS* 💫",
+      title: "GROUP",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051319552258.jpg",
       commands: [
-        "▪️ .animegirl - Random anime girl image",
-        "▪️ .fact - Get random fun facts",
-        "▪️ .joke - Get random jokes",
-        "▪️ .hack - Fun hacking simulation",
-        "▪️ .dog - Random dog images"
+        { name: "kick", use: ".kick <reply to user>" },
+        { name: "add", use: ".add < number >" },
+        { name: "promote", use: ".promote <reply to user>" },
+        { name: "demote", use: ".demote <reply to user>" },
+        { name: "mute", use: ".mute" },
+        { name: "unmute", use: ".unmute" },
+        { name: "dp", use: ".dp < number or reply >" }
       ]
     },
     9: {
-      title: "🤖 *AI COMMANDS* 🤖",
+      title: "STICKER",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/IMG-20250427-WA0142.jpg",
       commands: [
-        "▪️ .ai <text> - Chat with AI",
-        "▪️ .gemini <text> - Google Gemini AI",
-        "▪️ .imagine <text> - Generate AI images",
-        "▪️ .aivideoframes <text> - AI video frames",
-        "▪️ .aislideshow <text> - AI slideshow",
-        "▪️ .vidpreview <text> - Video preview",
-        "▪️ .aigifframes <text> - AI GIF frames"
+        { name: "loli", use: ".loli" },
+        { name: "waifu", use: ".waifu" },
+        { name: "neko", use: ".neko" },
+        { name: "megumin", use: ".megumin" },
+        { name: "maid", use: ".maid" },
+        { name: "awoo", use: ".awoo" }
       ]
     },
     10: {
-      title: "🎲 *OTHER COMMANDS* 🎲",
+      title: "GAME",
+      image: "https://raw.githubusercontent.com/Manmitha96/BOT-PHOTOS/refs/heads/main/2025051419391432.jpg",
       commands: [
-        "▪️ .gpass <number> - Generate password",
-        "▪️ .githubstalk <username> - GitHub profile info",
-        "▪️ .sh - Study helper tips",
-        "▪️ More utilities coming soon..."
+        { name: "hack", use: ".hack" },
+        { name: "animegirl", use: ".animegirl" },
+        { name: "fact", use: ".fact" },
+        { name: "joke", use: ".joke" },
+        { name: "dog", use: ".dog" },
+        { name: "gpass", use: ".gpass < number >" },
+        { name: "sh", use: ".sh" }
       ]
     }
   };
 
   const selectedMenu = subMenus[categoryNumber];
   if (selectedMenu) {
-    const menuText = `${selectedMenu.title}
+    let commandList = "";
+    selectedMenu.commands.forEach(cmd => {
+      commandList += `*╭──────────●●►*\n*│Command:* ${cmd.name}\n*│Use:* ${cmd.use}\n*╰──────────●●►*\n\n`;
+    });
 
-${selectedMenu.commands.join('\n')}
+    const menuText = `*HELLO* @${senderNumber}
+*╭─「 ᴄᴏᴍᴍᴀɴᴅꜱ ᴘᴀɴᴇʟ」*
+*│◈ 𝚁𝙰𝙼 𝚄𝚂𝙰𝙶𝙴 -* ${ramUsage}
+*│◈ 𝚁𝚄𝙽𝚃𝙸𝙼𝙴 -* ${formattedUptime}
+*╰──────────●●►*
 
-💡 *Usage:* Simply type any command to use it!
-🔙 *Back to main menu:* Type .menu
-⏰ *Menu expires in 8 minutes*
+*╭──────────●●►*
+*│⚜️ ${selectedMenu.title} Command List:*
+*╰──────────●●►*
+
+${commandList}➠ *Total Commands in ${selectedMenu.title}*: ${selectedMenu.commands.length}
 
 *Reply with another number (1-10) for more categories!*
 
-☯️ *Made by P_I_K_O*`;
+*㋛ 𝙿𝙾𝚆𝙴𝚁𝙳 𝙱𝚈 𝙿_𝙸_𝙺_𝙾 〽️*`;
 
     const submenuMessage = await robin.sendMessage(
       from,
       {
-        image: { url: config.ALIVE_IMG },
+        image: { url: selectedMenu.image },
         caption: menuText,
+        contextInfo: {
+          mentionedJid: [`${senderNumber}@s.whatsapp.net`]
+        }
       },
       { quoted: mek }
     );
