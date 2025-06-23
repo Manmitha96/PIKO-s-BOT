@@ -14,18 +14,23 @@ cmd(
       if (!isAdmins) return reply('*⛔ Only group admins can use this command.*');
       if (!isBotAdmins) return reply('*🤖 I need admin rights to change the group picture.*');
 
-      const quoted = m.quoted;
+      const quoted = m?.quoted;
+
+      // 🧠 Check: is reply + is image
+      if (!quoted || !quoted.message || !quoted.mtype || !quoted.mtype.includes('image')) {
+        return reply('*🖼️ Please reply to an image to set it as group profile picture.*');
+      }
 
       reply('*📥 Downloading image...*');
 
-      const buffer = await downloadMediaMessage(quoted, 'buffer', {}, {});
+      const media = await downloadMediaMessage(quoted, 'buffer', {}, {});
 
-      await client.updateProfilePicture(m.chat, buffer);
+      await client.updateProfilePicture(m.chat, media);
       reply('*✅ Group profile picture updated successfully!*');
 
-    } catch (e) {
-      console.error(e);
-      reply('*❌ Failed to update group profile picture. Make sure you reply to an image.*');
+    } catch (err) {
+      console.error('[ERROR setgpp]', err);
+      reply('*❌ Failed to set group picture. Make sure you replied to an image.*');
     }
   }
 );
