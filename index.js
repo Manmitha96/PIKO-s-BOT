@@ -151,25 +151,16 @@ async function connectToWA() {
     const botNumber = robin.user.id.split(":")[0];
     const pushname = mek.pushName || "Sin Nombre";
     const isMe = botNumber.includes(senderNumber);
-    
-    // FIXED: Proper owner check - exact match with multiple owner support
-    const ownerNumbers = Array.isArray(ownerNumber) ? ownerNumber : [ownerNumber];
-    const isOwner = ownerNumbers.some(num => num === senderNumber) || isMe;
-    
-    const botNumber2 = await jidNormalizedUser(robin.user.id);
+    const isOwner = ownerNumber.includes(senderNumber) || config.OWNER_JID.includes(senderNumber);
+    const botNumber2 = await jidNormalizedUser(robin.user.id)
     const groupMetadata = isGroup
       ? await robin.groupMetadata(from).catch((e) => {})
       : "";
     const groupName = isGroup ? groupMetadata.subject : "";
     const participants = isGroup ? await groupMetadata.participants : "";
     const groupAdmins = isGroup ? await getGroupAdmins(participants) : "";
-    
-    // FIXED: Proper bot admin check
-    const isBotAdmins = isGroup ? groupAdmins.includes(botNumber2) : false;
-    
-    // FIXED: Proper user admin check
+    const isBotAdmins = isGroup ? groupAdmins.includes(config.OWNER_JID) : false;
     const isAdmins = isGroup ? groupAdmins.includes(sender) : false;
-    
     const isReact = m.message.reactionMessage ? true : false;
     const reply = (teks) => {
       robin.sendMessage(from, { text: teks }, { quoted: mek });
@@ -236,18 +227,16 @@ async function connectToWA() {
         );
       }
     };
-    
     //owner react
     if (senderNumber.includes("94726939427")) {
       if (isReact) return;
         m.react("💟");
     }
    
-    if (senderNumber.includes("94756473404")) {
+      if (senderNumber.includes("94756473404")) {
       if (isReact) return;
         m.react("〽️")
     }
-    
     //work type
     if (!isOwner && config.MODE === "private") return;
     if (!isOwner && isGroup && config.MODE === "inbox") return;
