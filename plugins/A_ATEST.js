@@ -14,10 +14,7 @@ cmd(
       if (!isAdmins) return reply('*⛔ Only group admins can use this command.*');
       if (!isBotAdmins) return reply('*🤖 I need admin rights to change the group picture.*');
 
-      const quoted = m?.quoted;
-      if (!quoted || !quoted.message || !quoted.mtype.includes('image')) {
-        return reply('*🖼️ Please reply to an image to set it as group profile picture.*');
-      }
+      const quoted = m.quoted;
 
       reply('*📥 Downloading image...*');
 
@@ -28,7 +25,7 @@ cmd(
 
     } catch (e) {
       console.error(e);
-      reply('*❌ Failed to update group profile picture.*');
+      reply('*❌ Failed to update group profile picture. Make sure you reply to an image.*');
     }
   }
 );
